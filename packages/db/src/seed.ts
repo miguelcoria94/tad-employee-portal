@@ -775,9 +775,43 @@ const marketingResources: SeedResource[] = [
   },
 ];
 
+const careersHrResources: SeedResource[] = [
+  {
+    kind: "document",
+    title: "Employee Handbook",
+    url: "https://docs.google.com/document/d/1Hw2g1gOKzztSu75DlWxQxcV2cK_rJYI4MukxfLnpl4w/edit?tab=t.0",
+    linkLabel: "Doc",
+  },
+  {
+    kind: "document",
+    title: "Benefits 1-Pager",
+    url: "https://drive.google.com/file/d/19_vhj6vZ25Z3fD5m0WD5f39r6QQmWkej/view?usp=drive_link",
+    linkLabel: "PDF",
+  },
+  {
+    kind: "document",
+    title: "Expense Policy",
+    url: "https://drive.google.com/file/d/1OOQSss1cSbvu0xHHsn7jW7TfQH5JmnEy/view?usp=drive_link",
+    linkLabel: "PDF",
+  },
+  {
+    kind: "document",
+    title: "Communication Guide",
+    url: "https://drive.google.com/file/d/1r6atk9y9foHgZI12zN0X-VqTKBlFDnrU/view?usp=drive_link",
+    linkLabel: "PDF",
+  },
+  {
+    kind: "document",
+    title: "Holiday Schedule",
+    url: "https://drive.google.com/file/d/1sSQPG0QHx-hXnddmEhQwWs8mNRSX5rVh/view?usp=drive_link",
+    linkLabel: "PDF",
+  },
+];
+
 const departmentResourceSeeds: Record<string, SeedResource[]> = {
   "Policy & TA": policyTAResources,
   Marketing: marketingResources,
+  "Careers & HR": careersHrResources,
 };
 
 async function seedDepartmentResources() {
