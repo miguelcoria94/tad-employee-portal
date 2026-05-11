@@ -11,6 +11,7 @@ import { EmployeeCard } from "@/components/directory/employee-card";
 import { Spinner } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
+import { departmentIcon, departmentIconStyle } from "@/lib/department-icons";
 
 export function DepartmentDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -58,10 +59,19 @@ export function DepartmentDetailPage() {
           Back to Portal
         </Link>
 
-        <header className="mt-8 flex flex-col gap-4">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-highlight-600">
-            Department
-          </p>
+        <header className="mt-8 flex flex-col gap-5">
+          <div className="flex items-center gap-4">
+            <span className="grid h-14 w-14 place-items-center rounded-2xl bg-highlight-100 text-highlight-700 shadow-soft">
+              <i
+                className={`${departmentIcon(department.name)} text-[26px] leading-none`}
+                style={departmentIconStyle}
+                aria-hidden="true"
+              />
+            </span>
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-highlight-600">
+              Department
+            </p>
+          </div>
           <div className="flex items-end justify-between gap-6">
             <h1 className="text-4xl font-extrabold tracking-tight text-brand-900 md:text-5xl">
               {department.name}

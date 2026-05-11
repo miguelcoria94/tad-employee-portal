@@ -7,6 +7,7 @@ import {
 } from "@tadhealth/shared";
 import { api } from "@/lib/api";
 import { Spinner } from "@/components/ui/spinner";
+import { departmentIcon, departmentIconStyle } from "@/lib/department-icons";
 
 export function DepartmentsPage() {
   const { data, isLoading } = useQuery<{ departments: DepartmentRow[] }>({
@@ -54,15 +55,22 @@ export function DepartmentsPage() {
                   aria-label={`Open ${d.name} department`}
                 />
                 <div className="flex items-start justify-between gap-3">
-                  <h3 className="text-lg font-bold tracking-tight text-brand-900">
-                    {d.name}
-                  </h3>
+                  <span className="grid h-11 w-11 place-items-center rounded-xl bg-highlight-100 text-highlight-700">
+                    <i
+                      className={`${departmentIcon(d.name)} text-[20px] leading-none`}
+                      style={departmentIconStyle}
+                      aria-hidden="true"
+                    />
+                  </span>
                   <i
                     className="fa-light fa-arrow-up-right text-brand-300 transition-colors group-hover:text-brand-900"
                     aria-hidden="true"
                   />
                 </div>
-                <p className="mt-2 text-sm leading-relaxed text-brand-600">
+                <h3 className="mt-5 text-lg font-bold tracking-tight text-brand-900">
+                  {d.name}
+                </h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-brand-600">
                   {d.description}
                 </p>
               </li>
