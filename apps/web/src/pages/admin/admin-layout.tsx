@@ -2,6 +2,7 @@ import { NavLink, Outlet } from "react-router-dom";
 import {
   Building2,
   LayoutDashboard,
+  Newspaper,
   ShieldCheck,
   Users,
 } from "lucide-react";
@@ -11,6 +12,7 @@ const links = [
   { to: "/admin", label: "Overview", end: true, icon: LayoutDashboard },
   { to: "/admin/employees", label: "Employees", icon: Users },
   { to: "/admin/departments", label: "Departments", icon: Building2 },
+  { to: "/admin/company-updates", label: "Company Updates", icon: Newspaper },
 ];
 
 export function AdminLayout() {

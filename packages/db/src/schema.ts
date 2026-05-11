@@ -88,9 +88,32 @@ export const departments = pgTable(
   }),
 );
 
+export const companyUpdates = pgTable(
+  "company_updates",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    title: text("title").notNull(),
+    body: text("body").notNull().default(""),
+    publishedAt: timestamp("published_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    publishedIdx: index("company_updates_published_idx").on(t.publishedAt),
+  }),
+);
+
 export type Employee = typeof employees.$inferSelect;
 export type NewEmployee = typeof employees.$inferInsert;
 export type Profile = typeof profiles.$inferSelect;
 export type NewProfile = typeof profiles.$inferInsert;
 export type Department = typeof departments.$inferSelect;
 export type NewDepartment = typeof departments.$inferInsert;
+export type CompanyUpdate = typeof companyUpdates.$inferSelect;
+export type NewCompanyUpdate = typeof companyUpdates.$inferInsert;

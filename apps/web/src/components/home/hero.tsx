@@ -1,4 +1,5 @@
 import { ArrowRight, Calendar } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/auth/auth-context";
 import { formatDateLong } from "@/lib/utils";
@@ -32,13 +33,12 @@ export function Hero() {
           </p>
 
           <div className="flex flex-wrap items-center gap-3">
-            <Button size="lg">
-              View Daily Updates
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="lg">
-              Browse Team Directory
-            </Button>
+            <Link to="/company-updates">
+              <Button size="lg">
+                View Company Updates
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

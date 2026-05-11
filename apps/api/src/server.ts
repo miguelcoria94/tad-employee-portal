@@ -10,6 +10,7 @@ import { healthRoutes } from "./routes/health.js";
 import { meRoutes } from "./routes/me.js";
 import { employeeRoutes } from "./routes/employees.js";
 import { departmentRoutes } from "./routes/departments.js";
+import { companyUpdateRoutes } from "./routes/company-updates.js";
 
 async function buildServer() {
   const app = Fastify({
@@ -46,6 +47,7 @@ async function buildServer() {
       await api.register(meRoutes);
       await api.register(employeeRoutes);
       await api.register(departmentRoutes);
+      await api.register(companyUpdateRoutes);
     },
     { prefix: "/api/v1" },
   );
