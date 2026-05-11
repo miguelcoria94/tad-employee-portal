@@ -1,0 +1,6 @@
+{
+  "framework": "vite",
+  "buildCommand": "pnpm --filter @tadhealth/shared build && pnpm --filter @tadhealth/db build && pnpm --filter @tadhealth/web build",
+  "outputDirectory": "apps/web/dist",
+  "rewrites": [{ "source": "/((?!assets/).*)", "destination": "/index.html" }]
+}
