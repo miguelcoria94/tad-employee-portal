@@ -9,6 +9,7 @@ const links = [
   { to: "/", label: "Home", end: true },
   { to: "/departments", label: "Departments" },
   { to: "/directory", label: "Team Directory" },
+  { to: "/surveys", label: "Surveys" },
 ];
 
 export function Topbar() {

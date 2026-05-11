@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   boolean,
   date,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -139,5 +140,97 @@ export type Department = typeof departments.$inferSelect;
 export type NewDepartment = typeof departments.$inferInsert;
 export type CompanyUpdate = typeof companyUpdates.$inferSelect;
 export type NewCompanyUpdate = typeof companyUpdates.$inferInsert;
+export const surveys = pgTable("surveys", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  description: text("description").notNull().default(""),
+  isAnonymous: boolean("is_anonymous").notNull().default(false),
+  showResultsToAll: boolean("show_results_to_all").notNull().default(false),
+  isPublished: boolean("is_published").notNull().default(true),
+  opensAt: timestamp("opens_at", { withTimezone: true }),
+  closesAt: timestamp("closes_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const surveyQuestions = pgTable(
+  "survey_questions",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    surveyId: uuid("survey_id")
+      .notNull()
+      .references(() => surveys.id, { onDelete: "cascade" }),
+    prompt: text("prompt").notNull(),
+    type: text("type").notNull(),
+    options: jsonb("options").$type<string[] | null>(),
+    isRequired: boolean("is_required").notNull().default(false),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    surveyIdx: index("survey_questions_survey_idx").on(t.surveyId, t.sortOrder),
+  }),
+);
+
+export const surveyResponses = pgTable(
+  "survey_responses",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    surveyId: uuid("survey_id")
+      .notNull()
+      .references(() => surveys.id, { onDelete: "cascade" }),
+    // nullable: when survey.is_anonymous is true, we deliberately discard the
+    // user id at the API layer so even backend logs can't tie a response to
+    // a person.
+    responderId: uuid("responder_id"),
+    submittedAt: timestamp("submitted_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    surveyIdx: index("survey_responses_survey_idx").on(t.surveyId),
+    // For non-anon surveys we enforce one response per user via the API
+    // (a partial unique index would also work but the API check is enough).
+    responderIdx: index("survey_responses_responder_idx").on(t.responderId),
+  }),
+);
+
+export const surveyAnswers = pgTable(
+  "survey_answers",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    responseId: uuid("response_id")
+      .notNull()
+      .references(() => surveyResponses.id, { onDelete: "cascade" }),
+    questionId: uuid("question_id")
+      .notNull()
+      .references(() => surveyQuestions.id, { onDelete: "cascade" }),
+    textValue: text("text_value"),
+    ratingValue: integer("rating_value"),
+    choiceValues: jsonb("choice_values").$type<string[] | null>(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    responseIdx: index("survey_answers_response_idx").on(t.responseId),
+    questionIdx: index("survey_answers_question_idx").on(t.questionId),
+  }),
+);
+
 export type CompanyEvent = typeof companyEvents.$inferSelect;
 export type NewCompanyEvent = typeof companyEvents.$inferInsert;
+export type Survey = typeof surveys.$inferSelect;
+export type NewSurvey = typeof surveys.$inferInsert;
+export type SurveyQuestion = typeof surveyQuestions.$inferSelect;
+export type NewSurveyQuestion = typeof surveyQuestions.$inferInsert;
+export type SurveyResponse = typeof surveyResponses.$inferSelect;
+export type NewSurveyResponse = typeof surveyResponses.$inferInsert;
+export type SurveyAnswer = typeof surveyAnswers.$inferSelect;
+export type NewSurveyAnswer = typeof surveyAnswers.$inferInsert;

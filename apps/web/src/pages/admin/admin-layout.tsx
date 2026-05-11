@@ -2,6 +2,7 @@ import { NavLink, Outlet } from "react-router-dom";
 import {
   Building2,
   Calendar,
+  ClipboardList,
   LayoutDashboard,
   Newspaper,
   ShieldCheck,
@@ -15,6 +16,7 @@ const links = [
   { to: "/admin/departments", label: "Departments", icon: Building2 },
   { to: "/admin/company-updates", label: "Updates", icon: Newspaper },
   { to: "/admin/company-events", label: "Events", icon: Calendar },
+  { to: "/admin/surveys", label: "Surveys", icon: ClipboardList },
 ];
 
 export function AdminLayout() {
