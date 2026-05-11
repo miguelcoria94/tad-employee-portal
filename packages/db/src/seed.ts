@@ -737,29 +737,74 @@ const policyTAResources: SeedResource[] = [
   },
 ];
 
-async function seedDepartmentResourcesIfEmpty() {
-  const existing = await db
-    .select({ id: departmentResources.id })
-    .from(departmentResources)
-    .where(eq(departmentResources.departmentName, "Policy & TA"))
-    .limit(1);
-  if (existing.length > 0) {
-    console.log("Skipping Policy & TA resources — already seeded.");
-    return;
+const marketingResources: SeedResource[] = [
+  {
+    kind: "tool",
+    title: "Marketing Request Form",
+    url: "https://tadhealth-hub-5hsi.vercel.app/request.html",
+    linkLabel: "Form",
+    category: "Forms",
+  },
+  {
+    kind: "tool",
+    title: "Brand Assets",
+    url: "https://drive.google.com/drive/folders/1ZNKYAIu9f9LFAjsUe2JgmP1yoSrz73lo?usp=drive_link",
+    linkLabel: "Drive",
+    category: "Brand",
+  },
+  {
+    kind: "tool",
+    title: "TadTalks",
+    url: "https://drive.google.com/drive/folders/16qwwfMfkrFE1fq6ppbpKaibqe74XroVp?usp=drive_link",
+    linkLabel: "Drive",
+    category: "Media",
+  },
+  {
+    kind: "tool",
+    title: "TadHealth Webinars",
+    url: "https://drive.google.com/drive/folders/1hYVJvHFlE0ISIvCE9kbo3dwiwZsV_AbT?usp=drive_link",
+    linkLabel: "Drive",
+    category: "Media",
+  },
+  {
+    kind: "tool",
+    title: "DHCS Fee Schedule Resource Library",
+    url: "https://www.dhcs.ca.gov/CYBHI/Pages/Fee-Schedule-Resource-Library.aspx",
+    linkLabel: "Link",
+    category: "External",
+  },
+];
+
+const departmentResourceSeeds: Record<string, SeedResource[]> = {
+  "Policy & TA": policyTAResources,
+  Marketing: marketingResources,
+};
+
+async function seedDepartmentResources() {
+  for (const [deptName, seeds] of Object.entries(departmentResourceSeeds)) {
+    const existing = await db
+      .select({ id: departmentResources.id })
+      .from(departmentResources)
+      .where(eq(departmentResources.departmentName, deptName))
+      .limit(1);
+    if (existing.length > 0) {
+      console.log(`Skipping ${deptName} resources — already seeded.`);
+      continue;
+    }
+    console.log(`Seeding ${seeds.length} ${deptName} resources…`);
+    await db.insert(departmentResources).values(
+      seeds.map((r, i) => ({
+        departmentName: deptName,
+        kind: r.kind,
+        title: r.title,
+        url: r.url,
+        linkLabel: r.linkLabel,
+        category: r.category ?? null,
+        documentDate: r.documentDate ?? null,
+        sortOrder: i,
+      })),
+    );
   }
-  console.log(`Seeding ${policyTAResources.length} Policy & TA resources…`);
-  await db.insert(departmentResources).values(
-    policyTAResources.map((r, i) => ({
-      departmentName: "Policy & TA",
-      kind: r.kind,
-      title: r.title,
-      url: r.url,
-      linkLabel: r.linkLabel,
-      category: r.category ?? null,
-      documentDate: r.documentDate ?? null,
-      sortOrder: i,
-    })),
-  );
 }
 
 async function run() {
@@ -778,7 +823,7 @@ async function run() {
   await seedEventsIfEmpty();
   await seedSurveysIfEmpty();
   await seedDepartmentSurveys();
-  await seedDepartmentResourcesIfEmpty();
+  await seedDepartmentResources();
 
   console.log("Seed complete.");
   await sql.end();
