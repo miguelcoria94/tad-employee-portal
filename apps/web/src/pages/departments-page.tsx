@@ -54,19 +54,13 @@ export function DepartmentsPage() {
                   className="absolute inset-0 rounded-2xl"
                   aria-label={`Open ${d.name} department`}
                 />
-                <div className="flex items-start justify-between gap-3">
-                  <span className="grid h-11 w-11 place-items-center rounded-xl bg-highlight-100 text-highlight-700">
-                    <i
-                      className={`${departmentIcon(d.name)} text-[20px] leading-none`}
-                      style={departmentIconStyle}
-                      aria-hidden="true"
-                    />
-                  </span>
+                <span className="grid h-11 w-11 place-items-center rounded-xl bg-highlight-100 text-highlight-700">
                   <i
-                    className="fa-light fa-arrow-up-right text-brand-300 transition-colors group-hover:text-brand-900"
+                    className={`${departmentIcon(d.name)} text-[20px] leading-none`}
+                    style={departmentIconStyle}
                     aria-hidden="true"
                   />
-                </div>
+                </span>
                 <h3 className="mt-5 text-lg font-bold tracking-tight text-brand-900">
                   {d.name}
                 </h3>
