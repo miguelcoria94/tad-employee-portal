@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans:
+    "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+
+  /* TadHealth brand */
+  --color-brand-50:  #e6f0f4;
+  --color-brand-100: #c0d7e1;
+  --color-brand-200: #97bccb;
+  --color-brand-300: #6ea1b6;
+  --color-brand-400: #4d87a1;
+  --color-brand-500: #2d6c8c;
+  --color-brand-600: #155879;
+  --color-brand-700: #084c6a;
+  --color-brand-800: #033f5a;
+  --color-brand-900: #013F5A;
+  --color-brand-950: #002a3e;
+
+  --color-highlight-50:  #effbfa;
+  --color-highlight-100: #d6f5f2;
+  --color-highlight-200: #aeeae4;
+  --color-highlight-300: #84ddd5;
+  --color-highlight-400: #6ED7D0;
+  --color-highlight-500: #45c1ba;
+  --color-highlight-600: #2fa39d;
+  --color-highlight-700: #257f7b;
+  --color-highlight-800: #1d6562;
+  --color-highlight-900: #15504d;
+
+  --color-accent-50:  #fff4ec;
+  --color-accent-100: #ffe2cd;
+  --color-accent-200: #ffc59b;
+  --color-accent-300: #fbab74;
+  --color-accent-400: #F89E5D;
+  --color-accent-500: #f48439;
+  --color-accent-600: #db6918;
+  --color-accent-700: #b35315;
+  --color-accent-800: #8a4011;
+  --color-accent-900: #66300d;
+}
+
+@layer base {
+  html, body, #root {
+    height: 100%;
+  }
+  body {
+    font-family: var(--font-sans);
+    color: var(--color-brand-900);
+    background-color: #f7f9fb;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  *:focus-visible {
+    outline: 2px solid var(--color-highlight-400);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+}
+
+@utility bg-brand-mesh {
+  background-image:
+    radial-gradient(at 20% 0%, rgba(110, 215, 208, 0.18) 0px, transparent 55%),
+    radial-gradient(at 80% 0%, rgba(248, 158, 93, 0.15) 0px, transparent 55%),
+    radial-gradient(at 40% 100%, rgba(1, 63, 90, 0.15) 0px, transparent 55%);
+}
+
+@utility shadow-soft {
+  box-shadow:
+    0 1px 2px rgba(1, 63, 90, 0.04),
+    0 8px 24px -8px rgba(1, 63, 90, 0.12);
+}
