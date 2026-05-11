@@ -8,8 +8,9 @@ import type {
 import { api, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
-import { Input, Textarea } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { RichTextEditor } from "@/components/editor/rich-text-editor";
 
 type Draft = {
   title: string;
@@ -296,18 +297,16 @@ export function AdminCompanyEventsPage() {
                 <span className="text-xs font-medium text-brand-700">
                   Description
                 </span>
-                <Textarea
-                  rows={5}
+                <RichTextEditor
                   value={editing.draft.description}
-                  onChange={(e) =>
+                  onChange={(html) =>
                     setEditing({
                       ...editing,
-                      draft: {
-                        ...editing.draft,
-                        description: e.target.value,
-                      },
+                      draft: { ...editing.draft, description: html },
                     })
                   }
+                  placeholder="Add details, agenda, dial-in info…"
+                  minHeight="min-h-[180px]"
                 />
               </label>
 

@@ -8,8 +8,9 @@ import type {
 import { api, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
-import { Input, Textarea } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { RichTextEditor } from "@/components/editor/rich-text-editor";
 
 type Editing =
   | { kind: "create"; draft: CreateCompanyUpdateInput }
@@ -199,15 +200,16 @@ export function AdminCompanyUpdatesPage() {
               </label>
               <label className="flex flex-col gap-1.5">
                 <span className="text-xs font-medium text-brand-700">Body</span>
-                <Textarea
-                  rows={8}
+                <RichTextEditor
                   value={editing.draft.body}
-                  onChange={(e) =>
+                  onChange={(html) =>
                     setEditing({
                       ...editing,
-                      draft: { ...editing.draft, body: e.target.value },
+                      draft: { ...editing.draft, body: html },
                     })
                   }
+                  placeholder="What's new this week?"
+                  minHeight="min-h-[220px]"
                 />
               </label>
               <label className="flex flex-col gap-1.5">
