@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import {
   Building2,
+  Calendar,
   LayoutDashboard,
   Newspaper,
   ShieldCheck,
@@ -12,7 +13,8 @@ const links = [
   { to: "/admin", label: "Overview", end: true, icon: LayoutDashboard },
   { to: "/admin/employees", label: "Employees", icon: Users },
   { to: "/admin/departments", label: "Departments", icon: Building2 },
-  { to: "/admin/company-updates", label: "Company Updates", icon: Newspaper },
+  { to: "/admin/company-updates", label: "Updates", icon: Newspaper },
+  { to: "/admin/company-events", label: "Events", icon: Calendar },
 ];
 
 export function AdminLayout() {

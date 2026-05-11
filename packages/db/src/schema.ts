@@ -109,6 +109,28 @@ export const companyUpdates = pgTable(
   }),
 );
 
+export const companyEvents = pgTable(
+  "company_events",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    title: text("title").notNull(),
+    description: text("description").notNull().default(""),
+    location: text("location"),
+    url: text("url"),
+    startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+    endsAt: timestamp("ends_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    startsIdx: index("company_events_starts_idx").on(t.startsAt),
+  }),
+);
+
 export type Employee = typeof employees.$inferSelect;
 export type NewEmployee = typeof employees.$inferInsert;
 export type Profile = typeof profiles.$inferSelect;
@@ -117,3 +139,5 @@ export type Department = typeof departments.$inferSelect;
 export type NewDepartment = typeof departments.$inferInsert;
 export type CompanyUpdate = typeof companyUpdates.$inferSelect;
 export type NewCompanyUpdate = typeof companyUpdates.$inferInsert;
+export type CompanyEvent = typeof companyEvents.$inferSelect;
+export type NewCompanyEvent = typeof companyEvents.$inferInsert;

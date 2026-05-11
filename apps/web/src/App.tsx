@@ -9,6 +9,7 @@ import { AdminLayout } from "@/pages/admin/admin-layout";
 import { AdminEmployeesPage } from "@/pages/admin/admin-employees-page";
 import { AdminDepartmentsPage } from "@/pages/admin/admin-departments-page";
 import { AdminCompanyUpdatesPage } from "@/pages/admin/admin-company-updates-page";
+import { AdminCompanyEventsPage } from "@/pages/admin/admin-company-events-page";
 import { AdminOverviewPage } from "@/pages/admin/admin-overview-page";
 import { RequireAuth } from "@/auth/require-auth";
 import { AppShell } from "@/components/shell/app-shell";
@@ -42,6 +43,7 @@ export function App() {
           <Route path="employees" element={<AdminEmployeesPage />} />
           <Route path="departments" element={<AdminDepartmentsPage />} />
           <Route path="company-updates" element={<AdminCompanyUpdatesPage />} />
+          <Route path="company-events" element={<AdminCompanyEventsPage />} />
         </Route>
       </Route>
 
