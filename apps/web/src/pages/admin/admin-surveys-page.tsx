@@ -69,6 +69,13 @@ export function AdminSurveysPage() {
                     {!s.isPublished && (
                       <Badge variant="neutral">Hidden</Badge>
                     )}
+                    {s.targetDepartments && s.targetDepartments.length > 0 && (
+                      <Badge variant="accent">
+                        {s.targetDepartments.length === 1
+                          ? s.targetDepartments[0]
+                          : `${s.targetDepartments.length} departments`}
+                      </Badge>
+                    )}
                   </div>
                 </div>
                 <div className="flex gap-1">

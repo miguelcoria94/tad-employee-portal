@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import type {
   CreateSurveyInput,
+  DepartmentRow,
   QuestionDraft,
   QuestionType,
   SurveyWithQuestions,
@@ -29,6 +30,7 @@ const blankSurvey: Draft = {
   isAnonymous: false,
   showResultsToAll: false,
   isPublished: true,
+  targetDepartments: null,
   opensAt: null,
   closesAt: null,
   questions: [],
@@ -65,6 +67,12 @@ export function AdminSurveyEditPage() {
     queryFn: () => api(`/api/v1/surveys/${id}`),
   });
 
+  const departmentsQ = useQuery<{ departments: DepartmentRow[] }>({
+    queryKey: ["departments"],
+    queryFn: () => api("/api/v1/departments"),
+  });
+  const allDepartments = departmentsQ.data?.departments ?? [];
+
   useEffect(() => {
     if (isNew) {
       setDraft(blankSurvey);
@@ -77,6 +85,7 @@ export function AdminSurveyEditPage() {
         isAnonymous: data.survey.isAnonymous,
         showResultsToAll: data.survey.showResultsToAll,
         isPublished: data.survey.isPublished,
+        targetDepartments: data.survey.targetDepartments,
         opensAt: isoForInput(data.survey.opensAt),
         closesAt: isoForInput(data.survey.closesAt),
         questions: data.survey.questions.map((q) => ({
@@ -143,6 +152,10 @@ export function AdminSurveyEditPage() {
     }
     const payload: CreateSurveyInput = {
       ...draft,
+      targetDepartments:
+        draft.targetDepartments && draft.targetDepartments.length > 0
+          ? draft.targetDepartments
+          : null,
       opensAt: draft.opensAt
         ? new Date(draft.opensAt).toISOString()
         : null,
@@ -260,6 +273,56 @@ export function AdminSurveyEditPage() {
               checked={draft.showResultsToAll}
               onChange={(v) => setDraft({ ...draft, showResultsToAll: v })}
             />
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="text-xs font-medium text-brand-700">
+                Audience
+              </span>
+              <span className="text-[11px] text-brand-500">
+                {!draft.targetDepartments || draft.targetDepartments.length === 0
+                  ? "Everyone (no filter)"
+                  : `${draft.targetDepartments.length} department${
+                      draft.targetDepartments.length === 1 ? "" : "s"
+                    }`}
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {allDepartments.map((d) => {
+                const selected =
+                  draft.targetDepartments?.includes(d.name) ?? false;
+                return (
+                  <button
+                    key={d.id}
+                    type="button"
+                    onClick={() => {
+                      const cur = draft.targetDepartments ?? [];
+                      const next = selected
+                        ? cur.filter((x) => x !== d.name)
+                        : [...cur, d.name];
+                      setDraft({
+                        ...draft,
+                        targetDepartments: next.length === 0 ? null : next,
+                      });
+                    }}
+                    className={
+                      "rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset transition-colors " +
+                      (selected
+                        ? "bg-brand-900 text-white ring-brand-900"
+                        : "bg-white text-brand-600 ring-brand-100 hover:bg-brand-50")
+                    }
+                  >
+                    {d.name}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-[11px] text-brand-500">
+              Leave empty to show the survey to all signed-in employees. Pick
+              one or more to restrict — only people whose department (or
+              sub-department) matches will see it.
+            </p>
           </div>
         </CardBody>
       </Card>

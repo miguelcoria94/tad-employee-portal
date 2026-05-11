@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRight, CheckCircle2, EyeOff } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, EyeOff, Users } from "lucide-react";
 import type { SurveyRow } from "@tadhealth/shared";
 import { api } from "@/lib/api";
 import { Spinner } from "@/components/ui/spinner";
@@ -79,6 +79,14 @@ export function SurveysPage() {
                         {s.hasResponded && (
                           <Badge variant="success">
                             <CheckCircle2 className="h-3 w-3" /> Responded
+                          </Badge>
+                        )}
+                        {s.targetDepartments && s.targetDepartments.length > 0 && (
+                          <Badge variant="accent">
+                            <Users className="h-3 w-3" />
+                            {s.targetDepartments.length === 1
+                              ? s.targetDepartments[0]
+                              : `${s.targetDepartments.length} departments`}
                           </Badge>
                         )}
                         {s.closesAt && (

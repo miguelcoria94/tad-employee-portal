@@ -147,6 +147,9 @@ export const surveys = pgTable("surveys", {
   isAnonymous: boolean("is_anonymous").notNull().default(false),
   showResultsToAll: boolean("show_results_to_all").notNull().default(false),
   isPublished: boolean("is_published").notNull().default(true),
+  // null/[] = visible to everyone; otherwise only employees whose department
+  // (or sub_department) is in this list can see the survey.
+  targetDepartments: jsonb("target_departments").$type<string[] | null>(),
   opensAt: timestamp("opens_at", { withTimezone: true }),
   closesAt: timestamp("closes_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })

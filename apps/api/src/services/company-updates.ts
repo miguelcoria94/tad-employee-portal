@@ -13,6 +13,16 @@ export async function listCompanyUpdates() {
     .orderBy(desc(schema.companyUpdates.publishedAt));
 }
 
+export async function getCompanyUpdate(id: string) {
+  const db = getDb();
+  const [row] = await db
+    .select()
+    .from(schema.companyUpdates)
+    .where(eq(schema.companyUpdates.id, id))
+    .limit(1);
+  return row ?? null;
+}
+
 export async function createCompanyUpdate(input: CreateCompanyUpdateInput) {
   const db = getDb();
   const values = {

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, Trash2, X } from "lucide-react";
+import { Eye, FileText, Pencil, Plus, Trash2, X } from "lucide-react";
 import type {
   CompanyUpdate,
   CreateCompanyUpdateInput,
@@ -11,6 +11,8 @@ import { Card, CardBody } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { RichTextEditor } from "@/components/editor/rich-text-editor";
+import { RichTextRenderer } from "@/components/editor/rich-text-renderer";
+import { cn } from "@/lib/utils";
 
 type Editing =
   | { kind: "create"; draft: CreateCompanyUpdateInput }
@@ -28,6 +30,7 @@ function isoForInput(iso?: string) {
 
 export function AdminCompanyUpdatesPage() {
   const qc = useQueryClient();
+  const [previewing, setPreviewing] = useState(false);
   const [editing, setEditing] = useState<Editing>(null);
 
   const { data, isLoading } = useQuery<{ updates: CompanyUpdate[] }>({
@@ -172,46 +175,123 @@ export function AdminCompanyUpdatesPage() {
 
       {editing && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-brand-950/40 p-4 backdrop-blur-sm">
-          <Card className="w-full max-w-lg">
+          <Card className="max-h-[90vh] w-full max-w-2xl overflow-y-auto">
             <CardBody className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-base font-semibold text-brand-900">
                   {editing.kind === "create" ? "New update" : "Edit update"}
                 </h3>
-                <button
-                  onClick={() => setEditing(null)}
-                  className="grid h-8 w-8 place-items-center rounded-lg text-brand-500 hover:bg-brand-50"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <div className="inline-flex rounded-lg border border-brand-100 bg-brand-50/60 p-0.5 text-xs font-semibold">
+                    <button
+                      type="button"
+                      onClick={() => setPreviewing(false)}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 transition-colors",
+                        !previewing
+                          ? "bg-white text-brand-900 shadow-sm"
+                          : "text-brand-500 hover:text-brand-700",
+                      )}
+                    >
+                      <FileText className="h-3.5 w-3.5" />
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewing(true)}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 transition-colors",
+                        previewing
+                          ? "bg-white text-brand-900 shadow-sm"
+                          : "text-brand-500 hover:text-brand-700",
+                      )}
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      Preview
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setEditing(null);
+                      setPreviewing(false);
+                    }}
+                    className="grid h-8 w-8 place-items-center rounded-lg text-brand-500 hover:bg-brand-50"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
 
-              <label className="flex flex-col gap-1.5">
-                <span className="text-xs font-medium text-brand-700">Title</span>
-                <Input
-                  value={editing.draft.title}
-                  onChange={(e) =>
-                    setEditing({
-                      ...editing,
-                      draft: { ...editing.draft, title: e.target.value },
-                    })
-                  }
-                />
-              </label>
-              <label className="flex flex-col gap-1.5">
-                <span className="text-xs font-medium text-brand-700">Body</span>
-                <RichTextEditor
-                  value={editing.draft.body}
-                  onChange={(html) =>
-                    setEditing({
-                      ...editing,
-                      draft: { ...editing.draft, body: html },
-                    })
-                  }
-                  placeholder="What's new this week?"
-                  minHeight="min-h-[220px]"
-                />
-              </label>
+              {previewing ? (
+                <div className="rounded-2xl border border-brand-100 bg-white p-6">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-brand-500">
+                    {editing.draft.publishedAt
+                      ? new Date(editing.draft.publishedAt).toLocaleDateString(
+                          "en-US",
+                          {
+                            weekday: "long",
+                            month: "long",
+                            day: "numeric",
+                            year: "numeric",
+                          },
+                        )
+                      : new Date().toLocaleDateString("en-US", {
+                          weekday: "long",
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                  </p>
+                  <h2 className="mt-2 text-2xl font-bold tracking-tight text-brand-900">
+                    {editing.draft.title || (
+                      <span className="text-brand-300">Untitled update</span>
+                    )}
+                  </h2>
+                  {editing.draft.body ? (
+                    <RichTextRenderer
+                      html={editing.draft.body}
+                      className="mt-4"
+                    />
+                  ) : (
+                    <p className="mt-4 text-sm italic text-brand-400">
+                      (Empty body — start typing in the Edit tab.)
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <label className="flex flex-col gap-1.5">
+                    <span className="text-xs font-medium text-brand-700">
+                      Title
+                    </span>
+                    <Input
+                      value={editing.draft.title}
+                      onChange={(e) =>
+                        setEditing({
+                          ...editing,
+                          draft: { ...editing.draft, title: e.target.value },
+                        })
+                      }
+                    />
+                  </label>
+                  <label className="flex flex-col gap-1.5">
+                    <span className="text-xs font-medium text-brand-700">
+                      Body
+                    </span>
+                    <RichTextEditor
+                      value={editing.draft.body}
+                      onChange={(html) =>
+                        setEditing({
+                          ...editing,
+                          draft: { ...editing.draft, body: html },
+                        })
+                      }
+                      placeholder="What's new this week?"
+                      minHeight="min-h-[220px]"
+                    />
+                  </label>
+                </>
+              )}
               <label className="flex flex-col gap-1.5">
                 <span className="text-xs font-medium text-brand-700">
                   Publish date

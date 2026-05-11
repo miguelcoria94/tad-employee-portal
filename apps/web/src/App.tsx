@@ -5,6 +5,7 @@ import { DirectoryPage } from "@/pages/directory-page";
 import { DepartmentsPage } from "@/pages/departments-page";
 import { DepartmentDetailPage } from "@/pages/department-detail-page";
 import { CompanyUpdatesPage } from "@/pages/company-updates-page";
+import { CompanyUpdateDetailPage } from "@/pages/company-update-detail-page";
 import { SurveysPage } from "@/pages/surveys-page";
 import { SurveyDetailPage } from "@/pages/survey-detail-page";
 import { SurveyResultsPage } from "@/pages/survey-results-page";
@@ -36,6 +37,7 @@ export function App() {
         <Route path="/departments" element={<DepartmentsPage />} />
         <Route path="/departments/:slug" element={<DepartmentDetailPage />} />
         <Route path="/company-updates" element={<CompanyUpdatesPage />} />
+        <Route path="/company-updates/:id" element={<CompanyUpdateDetailPage />} />
         <Route path="/surveys" element={<SurveysPage />} />
         <Route path="/surveys/:id" element={<SurveyDetailPage />} />
         <Route path="/surveys/:id/results" element={<SurveyResultsPage />} />

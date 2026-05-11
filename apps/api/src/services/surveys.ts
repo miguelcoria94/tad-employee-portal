@@ -15,13 +15,56 @@ function nullableDate(s: string | null | undefined) {
   return s ? new Date(s) : null;
 }
 
+/**
+ * Pull the user's department membership (plus admin flag) so we can decide
+ * which department-scoped surveys to show. Admins bypass the filter so they
+ * can review/preview every survey from the employee-facing pages.
+ */
+async function getViewerContext(userId: string) {
+  const db = getDb();
+  const [row] = await db
+    .select({
+      isAdmin: schema.profiles.isAdmin,
+      department: schema.employees.department,
+      subDepartment: schema.employees.subDepartment,
+    })
+    .from(schema.profiles)
+    .leftJoin(
+      schema.employees,
+      eq(schema.profiles.employeeId, schema.employees.id),
+    )
+    .where(eq(schema.profiles.id, userId))
+    .limit(1);
+  return {
+    isAdmin: row?.isAdmin ?? false,
+    departments: [row?.department, row?.subDepartment].filter(
+      (d): d is string => typeof d === "string" && d.length > 0,
+    ),
+  };
+}
+
+function isVisibleToViewer(
+  targets: string[] | null | undefined,
+  ctx: { isAdmin: boolean; departments: string[] },
+) {
+  if (ctx.isAdmin) return true;
+  if (!targets || targets.length === 0) return true;
+  return targets.some((d) => ctx.departments.includes(d));
+}
+
 export async function listSurveysForUser(userId: string) {
   const db = getDb();
-  const rows = await db
+  const ctx = await getViewerContext(userId);
+
+  const allRows = await db
     .select()
     .from(schema.surveys)
     .where(eq(schema.surveys.isPublished, true))
     .orderBy(desc(schema.surveys.createdAt));
+
+  const rows = allRows.filter((s) =>
+    isVisibleToViewer(s.targetDepartments as string[] | null, ctx),
+  );
 
   if (rows.length === 0) return [];
 
@@ -64,6 +107,10 @@ export async function getSurveyForUser(
     .where(eq(schema.surveys.id, surveyId))
     .limit(1);
   if (!survey || !survey.isPublished) return null;
+  const ctx = await getViewerContext(userId);
+  if (!isVisibleToViewer(survey.targetDepartments as string[] | null, ctx)) {
+    return null;
+  }
 
   const questions = await db
     .select()
@@ -312,6 +359,10 @@ export async function adminCreateSurvey(input: CreateSurveyInput) {
       isAnonymous: input.isAnonymous,
       showResultsToAll: input.showResultsToAll,
       isPublished: input.isPublished,
+      targetDepartments:
+        input.targetDepartments && input.targetDepartments.length > 0
+          ? input.targetDepartments
+          : null,
       opensAt: nullableDate(input.opensAt),
       closesAt: nullableDate(input.closesAt),
     })
@@ -345,6 +396,12 @@ export async function adminUpdateSurvey(id: string, input: UpdateSurveyInput) {
   if (input.showResultsToAll !== undefined)
     patch.showResultsToAll = input.showResultsToAll;
   if (input.isPublished !== undefined) patch.isPublished = input.isPublished;
+  if (input.targetDepartments !== undefined) {
+    patch.targetDepartments =
+      input.targetDepartments && input.targetDepartments.length > 0
+        ? input.targetDepartments
+        : null;
+  }
   if (input.opensAt !== undefined) patch.opensAt = nullableDate(input.opensAt);
   if (input.closesAt !== undefined)
     patch.closesAt = nullableDate(input.closesAt);

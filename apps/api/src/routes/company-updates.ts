@@ -7,6 +7,7 @@ import {
 import {
   createCompanyUpdate,
   deleteCompanyUpdate,
+  getCompanyUpdate,
   listCompanyUpdates,
   updateCompanyUpdate,
 } from "../services/company-updates.js";
@@ -20,6 +21,17 @@ export const companyUpdateRoutes: FastifyPluginAsync = async (app) => {
     async () => {
       const updates = await listCompanyUpdates();
       return { updates };
+    },
+  );
+
+  app.get(
+    "/company-updates/:id",
+    { preHandler: [app.requireAuth] },
+    async (req) => {
+      const { id } = idParam.parse(req.params);
+      const update = await getCompanyUpdate(id);
+      if (!update) throw app.httpErrors.notFound("Update not found");
+      return { update };
     },
   );
 

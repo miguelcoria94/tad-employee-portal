@@ -7,6 +7,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { RichTextRenderer } from "@/components/editor/rich-text-renderer";
+import { htmlToExcerpt } from "@/lib/excerpt";
 
 function formatLongDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", {
@@ -147,28 +148,40 @@ export function CompanyUpdatesPage() {
                 />
               ) : (
                 <ol className="relative space-y-8 border-l-2 border-brand-100 pl-6">
-                  {updates.map((u) => (
-                    <li key={u.id} className="relative">
-                      <span
-                        aria-hidden
-                        className="absolute -left-[33px] top-1.5 grid h-4 w-4 place-items-center rounded-full bg-highlight-400 ring-4 ring-white"
-                      />
-                      <article className="rounded-2xl border border-brand-100 bg-white p-6 shadow-soft">
-                        <time
-                          dateTime={u.publishedAt}
-                          className="text-xs font-semibold uppercase tracking-wider text-brand-500"
+                  {updates.map((u) => {
+                    const excerpt = htmlToExcerpt(u.body, 220);
+                    return (
+                      <li key={u.id} className="relative">
+                        <span
+                          aria-hidden
+                          className="absolute -left-[33px] top-1.5 grid h-4 w-4 place-items-center rounded-full bg-highlight-400 ring-4 ring-white"
+                        />
+                        <Link
+                          to={`/company-updates/${u.id}`}
+                          className="group block rounded-2xl border border-brand-100 bg-white p-6 shadow-soft transition-colors hover:border-highlight-300"
                         >
-                          {formatLongDate(u.publishedAt)}
-                        </time>
-                        <h3 className="mt-2 text-xl font-bold tracking-tight text-brand-900">
-                          {u.title}
-                        </h3>
-                        {u.body && (
-                          <RichTextRenderer html={u.body} className="mt-3" />
-                        )}
-                      </article>
-                    </li>
-                  ))}
+                          <time
+                            dateTime={u.publishedAt}
+                            className="text-xs font-semibold uppercase tracking-wider text-brand-500"
+                          >
+                            {formatLongDate(u.publishedAt)}
+                          </time>
+                          <h3 className="mt-2 text-xl font-bold tracking-tight text-brand-900">
+                            {u.title}
+                          </h3>
+                          {excerpt && (
+                            <p className="mt-3 text-sm leading-relaxed text-brand-700">
+                              {excerpt}
+                            </p>
+                          )}
+                          <p className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-brand-900 group-hover:text-highlight-700">
+                            Read more
+                            <span aria-hidden>→</span>
+                          </p>
+                        </Link>
+                      </li>
+                    );
+                  })}
                 </ol>
               )}
             </section>
