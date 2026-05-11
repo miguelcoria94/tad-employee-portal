@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { getDb, schema } from "@tadhealth/db";
 
 const ADMIN_EMAILS = new Set(["ben@tadhealth.com", "claire@tadhealth.com"]);
@@ -37,6 +37,22 @@ export async function ensureProfile(userId: string, email?: string) {
     .insert(schema.profiles)
     .values({ id: userId, employeeId, isAdmin })
     .onConflictDoNothing({ target: schema.profiles.id });
+
+  // If the profile already existed but wasn't linked to an employee (e.g.
+  // because the user signed up before the directory row was added), backfill
+  // the link the next time we see them. Only touches rows where employee_id
+  // is still null so we never overwrite an intentional unlink.
+  if (employeeId) {
+    await db
+      .update(schema.profiles)
+      .set({ employeeId, updatedAt: sql`now()` })
+      .where(
+        and(
+          eq(schema.profiles.id, userId),
+          isNull(schema.profiles.employeeId),
+        ),
+      );
+  }
 }
 
 export async function getProfileWithEmployee(userId: string) {

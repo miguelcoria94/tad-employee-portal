@@ -107,6 +107,7 @@ const seedEmployees: NewEmployee[] = [
   { firstName: "Cam", title: "Head of Product Experience", department: "Product & Design", subDepartment: "Product & Engineering", email: "cam@tadhealth.com" },
   { firstName: "Jess", title: "Manager Customer Experience and Support", department: "Customer Experience", email: "jessica@tadhealth.com" },
   { firstName: "Ron", title: "Regional Director of Partnerships, Southern California", department: "Sales", email: "ron@tadhealth.com" },
+  { firstName: "Miguel", lastName: "Coria", title: "Software Engineer", department: "Engineering", subDepartment: "Product & Engineering", email: "miguel@tadhealth.com" },
 ];
 
 const seedDepartments: NewDepartment[] = [

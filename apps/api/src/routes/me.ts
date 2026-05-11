@@ -10,10 +10,12 @@ export const meRoutes: FastifyPluginAsync = async (app) => {
     const email = req.user!.email;
 
     let result = await getProfileWithEmployee(userId);
-    if (!result) {
-      // First sign-in — the auth trigger may not have fired (e.g. on Supabase
-      // configurations where CREATE TRIGGER on auth.users isn't permitted to
-      // the migration role). Create the profile here, then re-read.
+    // Run ensureProfile whenever the profile is missing OR exists but isn't
+    // linked to an employee — covers two cases:
+    //   1) First sign-in (auth trigger didn't fire on this Supabase config)
+    //   2) User signed up before their directory row existed; now it does,
+    //      so backfill the employee_id link.
+    if (!result || result.profile.employeeId === null) {
       await ensureProfile(userId, email);
       result = await getProfileWithEmployee(userId);
     }
