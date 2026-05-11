@@ -7,15 +7,15 @@ import {
 import {
   createDepartment,
   deleteDepartment,
-  listDepartments,
+  listDepartmentsForUser,
   updateDepartment,
 } from "../services/departments.js";
 
 const idParam = z.object({ id: z.string().uuid() });
 
 export const departmentRoutes: FastifyPluginAsync = async (app) => {
-  app.get("/departments", { preHandler: [app.requireAuth] }, async () => {
-    const rows = await listDepartments();
+  app.get("/departments", { preHandler: [app.requireAuth] }, async (req) => {
+    const rows = await listDepartmentsForUser(req.user!.sub);
     return { departments: rows };
   });
 

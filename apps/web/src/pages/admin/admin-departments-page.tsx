@@ -4,10 +4,11 @@ import type {
   CreateDepartmentInput,
   DepartmentRow,
 } from "@tadhealth/shared";
-import { FolderOpen, Pencil, Plus, Trash2, X } from "lucide-react";
+import { FolderOpen, Lock, Pencil, Plus, Trash2, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { slugifyDepartment } from "@tadhealth/shared";
 import { api, ApiError } from "@/lib/api";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
 import { Input, Textarea } from "@/components/ui/input";
@@ -18,7 +19,11 @@ type Editing =
   | { kind: "edit"; id: string; draft: CreateDepartmentInput }
   | null;
 
-const blank: CreateDepartmentInput = { name: "", description: "" };
+const blank: CreateDepartmentInput = {
+  name: "",
+  description: "",
+  isPrivate: false,
+};
 
 export function AdminDepartmentsPage() {
   const qc = useQueryClient();
@@ -97,9 +102,16 @@ export function AdminDepartmentsPage() {
                 className="flex items-start gap-4 px-5 py-4 hover:bg-brand-50/40"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-brand-900">
-                    {d.name}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold text-brand-900">
+                      {d.name}
+                    </p>
+                    {d.isPrivate && (
+                      <Badge variant="accent">
+                        <Lock className="h-3 w-3" /> Private
+                      </Badge>
+                    )}
+                  </div>
                   <p className="mt-1 line-clamp-2 text-xs text-brand-500">
                     {d.description || "—"}
                   </p>
@@ -117,7 +129,11 @@ export function AdminDepartmentsPage() {
                       setEditing({
                         kind: "edit",
                         id: d.id,
-                        draft: { name: d.name, description: d.description },
+                        draft: {
+                          name: d.name,
+                          description: d.description,
+                          isPrivate: d.isPrivate,
+                        },
                       })
                     }
                     className="grid h-8 w-8 place-items-center rounded-lg text-brand-600 hover:bg-brand-100"
@@ -186,6 +202,32 @@ export function AdminDepartmentsPage() {
                     })
                   }
                 />
+              </label>
+
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-brand-100 bg-white px-3 py-2.5">
+                <input
+                  type="checkbox"
+                  checked={editing.draft.isPrivate ?? false}
+                  onChange={(e) =>
+                    setEditing({
+                      ...editing,
+                      draft: {
+                        ...editing.draft,
+                        isPrivate: e.target.checked,
+                      },
+                    })
+                  }
+                  className="mt-1 h-4 w-4 accent-highlight-500"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold text-brand-900">
+                    Private — members only
+                  </span>
+                  <span className="block text-xs text-brand-500">
+                    Hide this department from employees who aren't a member.
+                    Admins always see it.
+                  </span>
+                </span>
               </label>
 
               {errorMessage && (

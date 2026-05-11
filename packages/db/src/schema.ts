@@ -77,6 +77,9 @@ export const departments = pgTable(
     id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
     name: text("name").notNull(),
     description: text("description").notNull().default(""),
+    // false (default) = visible to every signed-in employee.
+    // true = only visible to members of this department (and admins).
+    isPrivate: boolean("is_private").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

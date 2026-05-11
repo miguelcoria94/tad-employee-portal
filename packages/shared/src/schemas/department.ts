@@ -12,6 +12,7 @@ export const departmentRowSchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(1),
   description: z.string(),
+  isPrivate: z.boolean(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -20,6 +21,7 @@ export type DepartmentRow = z.infer<typeof departmentRowSchema>;
 export const createDepartmentSchema = z.object({
   name: z.string().min(1).max(80),
   description: z.string().max(500).default(""),
+  isPrivate: z.boolean().optional().default(false),
 });
 export type CreateDepartmentInput = z.infer<typeof createDepartmentSchema>;
 
