@@ -2,6 +2,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { LogOut, ShieldCheck } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { Avatar } from "@/components/ui/avatar";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useAuth } from "@/auth/auth-context";
 import { cn } from "@/lib/utils";
 
@@ -65,6 +66,7 @@ export function Topbar() {
         </nav>
 
         <div className="ml-auto flex items-center gap-3">
+          <NotificationBell />
           <div className="hidden text-right md:block">
             <p className="text-xs text-brand-500">
               {me?.employee?.title ?? "Welcome"}

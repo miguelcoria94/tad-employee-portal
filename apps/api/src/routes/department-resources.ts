@@ -30,7 +30,9 @@ export const departmentResourceRoutes: FastifyPluginAsync = async (app) => {
     { preHandler: [app.requireAdmin] },
     async (req) => {
       const input = createDepartmentResourceSchema.parse(req.body);
-      const row = await createDepartmentResource(input);
+      const row = await createDepartmentResource(input, {
+        actorId: req.user!.sub,
+      });
       return { resource: row };
     },
   );

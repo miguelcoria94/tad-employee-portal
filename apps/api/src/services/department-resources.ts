@@ -1,10 +1,12 @@
 import { and, asc, eq, sql } from "drizzle-orm";
 import { getDb, schema } from "@tadhealth/db";
-import type {
-  CreateDepartmentResourceInput,
-  ResourceKind,
-  UpdateDepartmentResourceInput,
+import {
+  type CreateDepartmentResourceInput,
+  type ResourceKind,
+  type UpdateDepartmentResourceInput,
+  slugifyDepartment,
 } from "@tadhealth/shared";
+import { notify } from "./notifications.js";
 
 function nullableDate(s: string | null | undefined) {
   if (!s) return null;
@@ -49,6 +51,7 @@ export async function listResourcesByKind(
 
 export async function createDepartmentResource(
   input: CreateDepartmentResourceInput,
+  opts: { actorId?: string } = {},
 ) {
   const db = getDb();
   const [row] = await db
@@ -64,6 +67,18 @@ export async function createDepartmentResource(
       sortOrder: input.sortOrder ?? 0,
     })
     .returning();
+  if (row) {
+    await notify({
+      kind: "new_resource",
+      title: `New ${row.kind === "tool" ? "tool" : "document"} for ${input.departmentName}`,
+      body: row.title,
+      link: `/departments/${slugifyDepartment(input.departmentName)}`,
+      entityType: "department_resource",
+      entityId: row.id,
+      audience: { kind: "departments", names: [input.departmentName] },
+      excludeUserId: opts.actorId,
+    });
+  }
   return row ?? null;
 }
 

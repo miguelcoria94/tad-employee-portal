@@ -82,7 +82,7 @@ export const surveyRoutes: FastifyPluginAsync = async (app) => {
     { preHandler: [app.requireAdmin] },
     async (req) => {
       const input = createSurveySchema.parse(req.body);
-      const row = await adminCreateSurvey(input);
+      const row = await adminCreateSurvey(input, { actorId: req.user!.sub });
       return { survey: row };
     },
   );

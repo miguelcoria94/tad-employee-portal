@@ -4,6 +4,7 @@ import type {
   CreateCompanyEventInput,
   UpdateCompanyEventInput,
 } from "@tadhealth/shared";
+import { notify } from "./notifications.js";
 
 export async function listCompanyEvents(opts: { upcomingOnly?: boolean }) {
   const db = getDb();
@@ -28,12 +29,27 @@ function toRow(input: CreateCompanyEventInput) {
   };
 }
 
-export async function createCompanyEvent(input: CreateCompanyEventInput) {
+export async function createCompanyEvent(
+  input: CreateCompanyEventInput,
+  opts: { actorId?: string } = {},
+) {
   const db = getDb();
   const [row] = await db
     .insert(schema.companyEvents)
     .values(toRow(input))
     .returning();
+  if (row) {
+    await notify({
+      kind: "new_event",
+      title: "New event scheduled",
+      body: row.title,
+      link: "/company-updates",
+      entityType: "company_event",
+      entityId: row.id,
+      audience: { kind: "all" },
+      excludeUserId: opts.actorId,
+    });
+  }
   return row;
 }
 

@@ -40,7 +40,7 @@ export const companyUpdateRoutes: FastifyPluginAsync = async (app) => {
     { preHandler: [app.requireAdmin] },
     async (req) => {
       const input = createCompanyUpdateSchema.parse(req.body);
-      const row = await createCompanyUpdate(input);
+      const row = await createCompanyUpdate(input, { actorId: req.user!.sub });
       return { update: row };
     },
   );

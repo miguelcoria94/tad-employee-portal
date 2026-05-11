@@ -16,6 +16,7 @@ import { companyUpdateRoutes } from "./routes/company-updates.js";
 import { companyEventRoutes } from "./routes/company-events.js";
 import { uploadRoutes } from "./routes/uploads.js";
 import { surveyRoutes } from "./routes/surveys.js";
+import { notificationRoutes } from "./routes/notifications.js";
 
 async function buildServer() {
   const app = Fastify({
@@ -60,6 +61,7 @@ async function buildServer() {
       await api.register(companyEventRoutes);
       await api.register(uploadRoutes);
       await api.register(surveyRoutes);
+      await api.register(notificationRoutes);
     },
     { prefix: "/api/v1" },
   );

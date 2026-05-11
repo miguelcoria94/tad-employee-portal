@@ -10,6 +10,7 @@ import type {
   SurveyWithQuestions,
   UpdateSurveyInput,
 } from "@tadhealth/shared";
+import { notify, type Audience } from "./notifications.js";
 
 function nullableDate(s: string | null | undefined) {
   return s ? new Date(s) : null;
@@ -248,6 +249,42 @@ export async function submitSurveyResponse(
     await db.insert(schema.surveyAnswers).values(answerRows);
   }
 
+  // Tell admins someone responded. For anon surveys we deliberately don't
+  // include the responder's name in the body.
+  let actorName: string | null = null;
+  if (!survey.isAnonymous) {
+    const [emp] = await db
+      .select({
+        firstName: schema.employees.firstName,
+        lastName: schema.employees.lastName,
+      })
+      .from(schema.profiles)
+      .innerJoin(
+        schema.employees,
+        eq(schema.profiles.employeeId, schema.employees.id),
+      )
+      .where(eq(schema.profiles.id, userId))
+      .limit(1);
+    if (emp) {
+      actorName = emp.lastName
+        ? `${emp.firstName} ${emp.lastName}`
+        : emp.firstName;
+    }
+  }
+
+  await notify({
+    kind: "survey_response",
+    title: "New survey response",
+    body: survey.isAnonymous
+      ? `Anonymous response on "${survey.title}"`
+      : `${actorName ?? "Someone"} responded to "${survey.title}"`,
+    link: `/surveys/${survey.id}/results`,
+    entityType: "survey_response",
+    entityId: response.id,
+    actorName: survey.isAnonymous ? null : actorName,
+    audience: { kind: "admins" },
+  });
+
   return { id: response.id };
 }
 
@@ -349,7 +386,10 @@ export async function getSurveyResults(
 
 // ── Admin write paths ───────────────────────────────────────────────────────
 
-export async function adminCreateSurvey(input: CreateSurveyInput) {
+export async function adminCreateSurvey(
+  input: CreateSurveyInput,
+  opts: { actorId?: string } = {},
+) {
   const db = getDb();
   const inserted = await db
     .insert(schema.surveys)
@@ -370,6 +410,25 @@ export async function adminCreateSurvey(input: CreateSurveyInput) {
   const survey = inserted[0];
   if (!survey) {
     throw new Error("Failed to create survey");
+  }
+
+  if (input.isPublished) {
+    const audience: Audience = survey.targetDepartments
+      ? {
+          kind: "departments",
+          names: survey.targetDepartments as string[],
+        }
+      : { kind: "all" };
+    await notify({
+      kind: "new_survey",
+      title: "New survey",
+      body: survey.title,
+      link: `/surveys/${survey.id}`,
+      entityType: "survey",
+      entityId: survey.id,
+      audience,
+      excludeUserId: opts.actorId,
+    });
   }
 
   if (input.questions.length) {

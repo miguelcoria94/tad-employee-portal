@@ -170,10 +170,40 @@ export type Employee = typeof employees.$inferSelect;
 export type NewEmployee = typeof employees.$inferInsert;
 export type Profile = typeof profiles.$inferSelect;
 export type NewProfile = typeof profiles.$inferInsert;
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    // References auth.users(id) but we don't declare the FK here for the
+    // same reason profiles.id doesn't — auth schema is owned by Supabase.
+    userId: uuid("user_id").notNull(),
+    kind: text("kind").notNull(), // 'new_update' | 'new_event' | 'new_survey' | 'new_resource' | 'survey_response' | 'changelog'
+    title: text("title").notNull(),
+    body: text("body").notNull().default(""),
+    link: text("link").notNull(),
+    entityType: text("entity_type").notNull(),
+    entityId: uuid("entity_id"),
+    actorName: text("actor_name"),
+    readAt: timestamp("read_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("notifications_user_idx").on(
+      t.userId,
+      t.readAt,
+      t.createdAt,
+    ),
+  }),
+);
+
 export type Department = typeof departments.$inferSelect;
 export type NewDepartment = typeof departments.$inferInsert;
 export type DepartmentResource = typeof departmentResources.$inferSelect;
 export type NewDepartmentResource = typeof departmentResources.$inferInsert;
+export type Notification = typeof notifications.$inferSelect;
+export type NewNotification = typeof notifications.$inferInsert;
 export type CompanyUpdate = typeof companyUpdates.$inferSelect;
 export type NewCompanyUpdate = typeof companyUpdates.$inferInsert;
 export const surveys = pgTable("surveys", {

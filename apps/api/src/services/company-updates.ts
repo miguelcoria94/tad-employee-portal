@@ -4,6 +4,7 @@ import type {
   CreateCompanyUpdateInput,
   UpdateCompanyUpdateInput,
 } from "@tadhealth/shared";
+import { notify } from "./notifications.js";
 
 export async function listCompanyUpdates() {
   const db = getDb();
@@ -23,7 +24,10 @@ export async function getCompanyUpdate(id: string) {
   return row ?? null;
 }
 
-export async function createCompanyUpdate(input: CreateCompanyUpdateInput) {
+export async function createCompanyUpdate(
+  input: CreateCompanyUpdateInput,
+  opts: { actorId?: string } = {},
+) {
   const db = getDb();
   const values = {
     title: input.title,
@@ -34,6 +38,18 @@ export async function createCompanyUpdate(input: CreateCompanyUpdateInput) {
     .insert(schema.companyUpdates)
     .values(values)
     .returning();
+  if (row) {
+    await notify({
+      kind: "new_update",
+      title: "New company update",
+      body: row.title,
+      link: `/company-updates/${row.id}`,
+      entityType: "company_update",
+      entityId: row.id,
+      audience: { kind: "all" },
+      excludeUserId: opts.actorId,
+    });
+  }
   return row;
 }
 

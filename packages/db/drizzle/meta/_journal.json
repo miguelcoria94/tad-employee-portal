@@ -64,6 +64,13 @@
       "when": 1778483933159,
       "tag": "0008_lethal_hitman",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1778484221378,
+      "tag": "0009_lonely_maggott",
+      "breakpoints": true
     }
   ]
 }
