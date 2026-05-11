@@ -12,6 +12,7 @@ import { SurveyResultsPage } from "@/pages/survey-results-page";
 import { AdminLayout } from "@/pages/admin/admin-layout";
 import { AdminEmployeesPage } from "@/pages/admin/admin-employees-page";
 import { AdminDepartmentsPage } from "@/pages/admin/admin-departments-page";
+import { AdminDepartmentResourcesPage } from "@/pages/admin/admin-department-resources-page";
 import { AdminCompanyUpdatesPage } from "@/pages/admin/admin-company-updates-page";
 import { AdminCompanyEventsPage } from "@/pages/admin/admin-company-events-page";
 import { AdminSurveysPage } from "@/pages/admin/admin-surveys-page";
@@ -52,6 +53,10 @@ export function App() {
           <Route index element={<AdminOverviewPage />} />
           <Route path="employees" element={<AdminEmployeesPage />} />
           <Route path="departments" element={<AdminDepartmentsPage />} />
+          <Route
+            path="departments/:slug/resources"
+            element={<AdminDepartmentResourcesPage />}
+          />
           <Route path="company-updates" element={<AdminCompanyUpdatesPage />} />
           <Route path="company-events" element={<AdminCompanyEventsPage />} />
           <Route path="surveys" element={<AdminSurveysPage />} />

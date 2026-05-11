@@ -50,6 +50,13 @@
       "when": 1778480817842,
       "tag": "0006_violet_night_nurse",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1778483396241,
+      "tag": "0007_fuzzy_arachne",
+      "breakpoints": true
     }
   ]
 }

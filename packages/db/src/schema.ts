@@ -89,6 +89,37 @@ export const departments = pgTable(
   }),
 );
 
+export const departmentResources = pgTable(
+  "department_resources",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    // We key on department name (not id) to match how employees.department
+    // is stored; keeps the join logic simple even when the match is via
+    // sub_department.
+    departmentName: text("department_name").notNull(),
+    kind: text("kind").notNull(), // 'tool' | 'document'
+    title: text("title").notNull(),
+    url: text("url"),
+    linkLabel: text("link_label").notNull().default("Link"),
+    category: text("category"),
+    documentDate: date("document_date"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    deptKindIdx: index("department_resources_dept_kind_idx").on(
+      t.departmentName,
+      t.kind,
+      t.sortOrder,
+    ),
+  }),
+);
+
 export const companyUpdates = pgTable(
   "company_updates",
   {
@@ -138,6 +169,8 @@ export type Profile = typeof profiles.$inferSelect;
 export type NewProfile = typeof profiles.$inferInsert;
 export type Department = typeof departments.$inferSelect;
 export type NewDepartment = typeof departments.$inferInsert;
+export type DepartmentResource = typeof departmentResources.$inferSelect;
+export type NewDepartmentResource = typeof departmentResources.$inferInsert;
 export type CompanyUpdate = typeof companyUpdates.$inferSelect;
 export type NewCompanyUpdate = typeof companyUpdates.$inferInsert;
 export const surveys = pgTable("surveys", {

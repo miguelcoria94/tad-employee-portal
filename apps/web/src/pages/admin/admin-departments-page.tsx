@@ -4,7 +4,9 @@ import type {
   CreateDepartmentInput,
   DepartmentRow,
 } from "@tadhealth/shared";
-import { Pencil, Plus, Trash2, X } from "lucide-react";
+import { FolderOpen, Pencil, Plus, Trash2, X } from "lucide-react";
+import { Link } from "react-router-dom";
+import { slugifyDepartment } from "@tadhealth/shared";
 import { api, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
@@ -103,6 +105,13 @@ export function AdminDepartmentsPage() {
                   </p>
                 </div>
                 <div className="flex gap-1">
+                  <Link
+                    to={`/admin/departments/${slugifyDepartment(d.name)}/resources`}
+                    className="grid h-8 w-8 place-items-center rounded-lg text-brand-600 hover:bg-brand-100"
+                    title="Manage resources"
+                  >
+                    <FolderOpen className="h-4 w-4" />
+                  </Link>
                   <button
                     onClick={() =>
                       setEditing({

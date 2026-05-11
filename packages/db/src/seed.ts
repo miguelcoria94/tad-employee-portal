@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import postgres from "postgres";
 import {
   companyEvents,
+  departmentResources,
   departments,
   employees,
   surveyAnswers,
@@ -668,6 +669,99 @@ async function seedDepartmentSurveys() {
   }
 }
 
+type SeedResource = {
+  kind: "tool" | "document";
+  title: string;
+  url: string | null;
+  linkLabel: string;
+  category?: string | null;
+  documentDate?: string | null;
+};
+
+const policyTAResources: SeedResource[] = [
+  {
+    kind: "tool",
+    title: "Policy & Practice Branded Assets",
+    url: "https://docs.google.com/spreadsheets/d/1El92Nv0oZ4vrI3Q4gnnAL-j9i_3dfbJ0mNwvcgwEceA/edit?gid=0#gid=0",
+    linkLabel: "Link",
+    category: "Other",
+  },
+  {
+    kind: "document",
+    title: "Weekly Policy & TA Email — 4/6/2026",
+    url: "https://drive.google.com/file/d/1KFryLTy3M4z4XwIUxDjxwFuOSBPdgWN8/view",
+    linkLabel: "Link",
+    documentDate: "2026-04-06",
+  },
+  {
+    kind: "document",
+    title: "Weekly Policy & TA Email — 3/30/2026",
+    url: "https://drive.google.com/file/d/1F9RwXmbj8Pvw-lEF_QovSVFBbwcFYIRy/view",
+    linkLabel: "Link",
+    documentDate: "2026-03-30",
+  },
+  {
+    kind: "document",
+    title: "Weekly Policy & TA Email — 3/23/2026",
+    url: null,
+    linkLabel: "Link",
+    documentDate: "2026-03-23",
+  },
+  {
+    kind: "document",
+    title: "Weekly Policy & TA Email — 3/16/2026",
+    url: null,
+    linkLabel: "Link",
+    documentDate: "2026-03-16",
+  },
+  {
+    kind: "document",
+    title: "Weekly Policy & TA Email — 3/2/2026",
+    url: null,
+    linkLabel: "Link",
+    documentDate: "2026-03-02",
+  },
+  {
+    kind: "document",
+    title: "Weekly Policy & TA Email — 2/23/2026",
+    url: null,
+    linkLabel: "Link",
+    documentDate: "2026-02-23",
+  },
+  {
+    kind: "document",
+    title: "How TA works with CX",
+    url: null,
+    linkLabel: "PDF",
+    documentDate: "2026-03-26",
+  },
+];
+
+async function seedDepartmentResourcesIfEmpty() {
+  const existing = await db
+    .select({ id: departmentResources.id })
+    .from(departmentResources)
+    .where(eq(departmentResources.departmentName, "Policy & TA"))
+    .limit(1);
+  if (existing.length > 0) {
+    console.log("Skipping Policy & TA resources — already seeded.");
+    return;
+  }
+  console.log(`Seeding ${policyTAResources.length} Policy & TA resources…`);
+  await db.insert(departmentResources).values(
+    policyTAResources.map((r, i) => ({
+      departmentName: "Policy & TA",
+      kind: r.kind,
+      title: r.title,
+      url: r.url,
+      linkLabel: r.linkLabel,
+      category: r.category ?? null,
+      documentDate: r.documentDate ?? null,
+      sortOrder: i,
+    })),
+  );
+}
+
 async function run() {
   console.log(`Seeding ${seedDepartments.length} departments…`);
   await db
@@ -684,6 +778,7 @@ async function run() {
   await seedEventsIfEmpty();
   await seedSurveysIfEmpty();
   await seedDepartmentSurveys();
+  await seedDepartmentResourcesIfEmpty();
 
   console.log("Seed complete.");
   await sql.end();

@@ -2,6 +2,7 @@ import { Link, Navigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import {
+  type DepartmentResourceRow,
   type DepartmentRow,
   type Employee,
   slugifyDepartment,
@@ -12,6 +13,10 @@ import { Spinner } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { departmentIcon, departmentIconStyle } from "@/lib/department-icons";
+import {
+  DocumentsSection,
+  ToolsSection,
+} from "@/components/department/resources-section";
 
 export function DepartmentDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -34,6 +39,15 @@ export function DepartmentDetailPage() {
       ),
   });
 
+  const resourcesQ = useQuery<{ resources: DepartmentResourceRow[] }>({
+    queryKey: ["department-resources", department?.name],
+    enabled: !!department,
+    queryFn: () =>
+      api(
+        `/api/v1/department-resources?department=${encodeURIComponent(department!.name)}`,
+      ),
+  });
+
   if (departmentsQ.isLoading) {
     return (
       <div className="grid place-items-center py-24">
@@ -47,6 +61,7 @@ export function DepartmentDetailPage() {
   }
 
   const employees = employeesQ.data?.employees ?? [];
+  const resources = resourcesQ.data?.resources ?? [];
 
   return (
     <div className="bg-brand-mesh">
@@ -105,6 +120,13 @@ export function DepartmentDetailPage() {
             </div>
           )}
         </section>
+
+        <ToolsSection
+          tools={resources.filter((r) => r.kind === "tool")}
+        />
+        <DocumentsSection
+          documents={resources.filter((r) => r.kind === "document")}
+        />
       </div>
     </div>
   );
