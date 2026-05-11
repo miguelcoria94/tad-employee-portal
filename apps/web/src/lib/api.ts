@@ -29,9 +29,16 @@ export async function api<T = unknown>(
   path: string,
   init: RequestInit = {},
 ): Promise<T> {
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+  // Only set Content-Type when we're actually sending a JSON body. With no
+  // body, declaring Content-Type: application/json makes Fastify's JSON
+  // parser try (and fail) to read the empty payload and reply 400.
+  const hasJsonBody = typeof init.body === "string" && init.body.length > 0;
+  const baseHeaders: Record<string, string> = {
+    ...(hasJsonBody ? { "Content-Type": "application/json" } : {}),
     ...(await authHeader()),
+  };
+  const headers: Record<string, string> = {
+    ...baseHeaders,
     ...((init.headers as Record<string, string> | undefined) ?? {}),
   };
 
