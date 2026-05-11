@@ -1,5 +1,6 @@
 import "./load-env.js";
 import { drizzle } from "drizzle-orm/postgres-js";
+import { eq } from "drizzle-orm";
 import postgres from "postgres";
 import {
   companyEvents,
@@ -15,6 +16,44 @@ import type {
   NewDepartment,
   NewEmployee,
 } from "./schema.js";
+
+type QType =
+  | "short_text"
+  | "long_text"
+  | "single_choice"
+  | "multi_choice"
+  | "rating";
+
+type SeedQuestion = {
+  prompt: string;
+  type: QType;
+  options?: string[] | null;
+  isRequired?: boolean;
+};
+
+type SeedAnswer = {
+  prompt: string;
+  textValue?: string;
+  ratingValue?: number;
+  choiceValues?: string[];
+};
+
+type SeedAnonResponse = {
+  submittedAt: Date;
+  answers: SeedAnswer[];
+};
+
+type SeedSurveySpec = {
+  title: string;
+  description: string;
+  isAnonymous: boolean;
+  showResultsToAll: boolean;
+  targetDepartments: string[] | null;
+  opensAt: Date | null;
+  closesAt: Date | null;
+  questions: SeedQuestion[];
+  anonymousResponses?: SeedAnonResponse[];
+};
 
 const url = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
 if (!url) throw new Error("DIRECT_URL (or DATABASE_URL) is required");
@@ -355,6 +394,279 @@ async function seedSurveysIfEmpty() {
   console.log(`Seeded pulse survey with ${pulseResponses.length} responses.`);
 }
 
+async function ensureSurveyByTitle(spec: SeedSurveySpec) {
+  const existing = await db
+    .select({ id: surveys.id })
+    .from(surveys)
+    .where(eq(surveys.title, spec.title))
+    .limit(1);
+  if (existing.length > 0) {
+    console.log(`Skipping survey "${spec.title}" — already exists.`);
+    return;
+  }
+
+  console.log(`Seeding survey: ${spec.title}`);
+  const [s] = await db
+    .insert(surveys)
+    .values({
+      title: spec.title,
+      description: spec.description,
+      isAnonymous: spec.isAnonymous,
+      showResultsToAll: spec.showResultsToAll,
+      isPublished: true,
+      targetDepartments: spec.targetDepartments,
+      opensAt: spec.opensAt,
+      closesAt: spec.closesAt,
+    })
+    .returning();
+  if (!s) throw new Error(`Failed to insert survey: ${spec.title}`);
+
+  const qs = await db
+    .insert(surveyQuestions)
+    .values(
+      spec.questions.map((q, i) => ({
+        surveyId: s.id,
+        prompt: q.prompt,
+        type: q.type,
+        options: q.options ?? null,
+        isRequired: q.isRequired ?? false,
+        sortOrder: i,
+      })),
+    )
+    .returning();
+
+  const byPrompt = new Map(qs.map((q) => [q.prompt, q]));
+
+  if (spec.anonymousResponses && spec.isAnonymous) {
+    for (const r of spec.anonymousResponses) {
+      const [resp] = await db
+        .insert(surveyResponses)
+        .values({
+          surveyId: s.id,
+          responderId: null,
+          submittedAt: r.submittedAt,
+        })
+        .returning();
+      if (!resp) continue;
+
+      const rows: {
+        responseId: string;
+        questionId: string;
+        textValue?: string | null;
+        ratingValue?: number | null;
+        choiceValues?: string[] | null;
+      }[] = [];
+      for (const a of r.answers) {
+        const q = byPrompt.get(a.prompt);
+        if (!q) continue;
+        rows.push({
+          responseId: resp.id,
+          questionId: q.id,
+          textValue: a.textValue ?? null,
+          ratingValue: a.ratingValue ?? null,
+          choiceValues: a.choiceValues ?? null,
+        });
+      }
+
+      if (rows.length > 0) {
+        await db.insert(surveyAnswers).values(rows);
+      }
+    }
+  }
+}
+
+const departmentSurveys: SeedSurveySpec[] = [
+  {
+    title: "Engineering Sprint Pulse",
+    description:
+      "<p>Quick read on how the current sprint feels. Non-anonymous — used to help leads remove blockers.</p>",
+    isAnonymous: false,
+    showResultsToAll: false,
+    targetDepartments: ["Engineering"],
+    opensAt: new Date("2026-05-11T00:00:00Z"),
+    closesAt: new Date("2026-05-21T00:00:00Z"),
+    questions: [
+      {
+        prompt: "How was this sprint, overall?",
+        type: "rating",
+        isRequired: true,
+      },
+      {
+        prompt: "What's the biggest blocker right now?",
+        type: "long_text",
+      },
+      {
+        prompt: "Where do we need investment?",
+        type: "multi_choice",
+        options: [
+          "Test infrastructure",
+          "CI / build speed",
+          "Documentation",
+          "Code review throughput",
+          "On-call tooling",
+          "Cross-team coordination",
+        ],
+      },
+      {
+        prompt: "Anything else worth flagging?",
+        type: "long_text",
+      },
+    ],
+  },
+  {
+    title: "Customer Experience: Voice of the Team",
+    description:
+      "<p>Anonymous pulse on how supported the CX team feels. Results visible to everyone on CX so we can act on patterns together.</p>",
+    isAnonymous: true,
+    showResultsToAll: true,
+    targetDepartments: ["Customer Experience"],
+    opensAt: new Date("2026-05-11T00:00:00Z"),
+    closesAt: new Date("2026-05-18T00:00:00Z"),
+    questions: [
+      {
+        prompt: "How well are our tools supporting your day-to-day work?",
+        type: "rating",
+        isRequired: true,
+      },
+      {
+        prompt: "What's working well right now?",
+        type: "long_text",
+      },
+      {
+        prompt: "Which area is most painful when supporting clients?",
+        type: "single_choice",
+        options: [
+          "Onboarding",
+          "Billing",
+          "Reporting",
+          "Integrations",
+          "Internal communication",
+          "Documentation",
+        ],
+        isRequired: true,
+      },
+      {
+        prompt: "How empowered do you feel to delight clients today?",
+        type: "rating",
+      },
+    ],
+    anonymousResponses: [
+      {
+        submittedAt: new Date("2026-05-11T15:30:00Z"),
+        answers: [
+          { prompt: "How well are our tools supporting your day-to-day work?", ratingValue: 4 },
+          { prompt: "What's working well right now?", textValue: "The new onboarding playbook has made first calls so much smoother." },
+          { prompt: "Which area is most painful when supporting clients?", textValue: "Billing" },
+          { prompt: "How empowered do you feel to delight clients today?", ratingValue: 4 },
+        ],
+      },
+      {
+        submittedAt: new Date("2026-05-11T19:10:00Z"),
+        answers: [
+          { prompt: "How well are our tools supporting your day-to-day work?", ratingValue: 3 },
+          { prompt: "What's working well right now?", textValue: "Cross-team collaboration with Engineering is genuinely better than last quarter." },
+          { prompt: "Which area is most painful when supporting clients?", textValue: "Reporting" },
+          { prompt: "How empowered do you feel to delight clients today?", ratingValue: 4 },
+        ],
+      },
+      {
+        submittedAt: new Date("2026-05-12T14:45:00Z"),
+        answers: [
+          { prompt: "How well are our tools supporting your day-to-day work?", ratingValue: 2 },
+          { prompt: "What's working well right now?", textValue: "Team morale is high; managers are supportive." },
+          { prompt: "Which area is most painful when supporting clients?", textValue: "Integrations" },
+          { prompt: "How empowered do you feel to delight clients today?", ratingValue: 3 },
+        ],
+      },
+      {
+        submittedAt: new Date("2026-05-12T18:00:00Z"),
+        answers: [
+          { prompt: "How well are our tools supporting your day-to-day work?", ratingValue: 5 },
+          { prompt: "What's working well right now?", textValue: "Clear escalation paths — I always know who to ping." },
+          { prompt: "Which area is most painful when supporting clients?", textValue: "Documentation" },
+          { prompt: "How empowered do you feel to delight clients today?", ratingValue: 5 },
+        ],
+      },
+      {
+        submittedAt: new Date("2026-05-13T13:20:00Z"),
+        answers: [
+          { prompt: "How well are our tools supporting your day-to-day work?", ratingValue: 4 },
+          { prompt: "What's working well right now?", textValue: "" },
+          { prompt: "Which area is most painful when supporting clients?", textValue: "Billing" },
+          { prompt: "How empowered do you feel to delight clients today?", ratingValue: 4 },
+        ],
+      },
+      {
+        submittedAt: new Date("2026-05-13T20:45:00Z"),
+        answers: [
+          { prompt: "How well are our tools supporting your day-to-day work?", ratingValue: 3 },
+          { prompt: "What's working well right now?", textValue: "Internal escalations to Engineering get fast turnarounds." },
+          { prompt: "Which area is most painful when supporting clients?", textValue: "Reporting" },
+          { prompt: "How empowered do you feel to delight clients today?", ratingValue: 3 },
+        ],
+      },
+      {
+        submittedAt: new Date("2026-05-14T15:10:00Z"),
+        answers: [
+          { prompt: "How well are our tools supporting your day-to-day work?", ratingValue: 4 },
+          { prompt: "What's working well right now?", textValue: "Client wins keep us motivated." },
+          { prompt: "Which area is most painful when supporting clients?", textValue: "Onboarding" },
+          { prompt: "How empowered do you feel to delight clients today?", ratingValue: 4 },
+        ],
+      },
+      {
+        submittedAt: new Date("2026-05-14T22:00:00Z"),
+        answers: [
+          { prompt: "How well are our tools supporting your day-to-day work?", ratingValue: 5 },
+          { prompt: "What's working well right now?", textValue: "Manager 1:1s have been incredibly useful this quarter." },
+          { prompt: "Which area is most painful when supporting clients?", textValue: "Internal communication" },
+          { prompt: "How empowered do you feel to delight clients today?", ratingValue: 5 },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Sales Enablement Check",
+    description:
+      "<p>What do you need to close the deals on your plate? Results go to leadership for the next enablement planning cycle.</p>",
+    isAnonymous: false,
+    showResultsToAll: false,
+    targetDepartments: ["Sales"],
+    opensAt: new Date("2026-05-12T00:00:00Z"),
+    closesAt: new Date("2026-05-23T00:00:00Z"),
+    questions: [
+      {
+        prompt: "Do you have what you need to close deals this quarter?",
+        type: "single_choice",
+        options: ["Yes", "Mostly", "Some gaps", "Significant gaps"],
+        isRequired: true,
+      },
+      {
+        prompt: "Which enablement materials would help most?",
+        type: "multi_choice",
+        options: [
+          "Battle cards",
+          "Case studies",
+          "ROI calculator",
+          "Demo scripts",
+          "Competitive intel",
+          "Product training",
+        ],
+      },
+      {
+        prompt: "Anything else leadership should know?",
+        type: "long_text",
+      },
+    ],
+  },
+];
+
+async function seedDepartmentSurveys() {
+  for (const spec of departmentSurveys) {
+    await ensureSurveyByTitle(spec);
+  }
+}
+
 async function run() {
   console.log(`Seeding ${seedDepartments.length} departments…`);
   await db
@@ -370,6 +682,7 @@ async function run() {
 
   await seedEventsIfEmpty();
   await seedSurveysIfEmpty();
+  await seedDepartmentSurveys();
 
   console.log("Seed complete.");
   await sql.end();
