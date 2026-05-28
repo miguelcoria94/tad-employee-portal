@@ -68,22 +68,28 @@ export function LoginPage() {
     setSubmitting(false);
   }
 
-  async function handleGoogle() {
+  async function handleMagicLink() {
     setError(null);
     setInfo(null);
+    if (!email) {
+      setError("Enter your email first, then we'll send you a sign-in link.");
+      return;
+    }
     setSubmitting(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
       options: {
-        redirectTo: `${window.location.origin}/`,
-        queryParams: { access_type: "offline", prompt: "consent" },
+        emailRedirectTo: `${window.location.origin}/`,
       },
     });
     if (error) {
       setError(error.message);
-      setSubmitting(false);
+    } else {
+      setInfo(
+        `We sent a sign-in link to ${email}. Open it on this device to finish signing in.`,
+      );
     }
-    // On success the browser is redirected to Google — no further state changes here.
+    setSubmitting(false);
   }
 
   return (
@@ -135,30 +141,7 @@ export function LoginPage() {
               : "We'll send a confirmation link to verify your email."}
           </p>
 
-          <div className="mt-8 space-y-3">
-            <button
-              type="button"
-              onClick={handleGoogle}
-              disabled={submitting}
-              className="inline-flex h-11 w-full items-center justify-center gap-3 rounded-xl border border-brand-100 bg-white text-sm font-semibold text-brand-900 shadow-sm transition-colors hover:border-brand-200 hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <i className="fa-brands fa-google text-base text-brand-700" aria-hidden="true" />
-              Continue with Google
-            </button>
-          </div>
-
-          <div className="relative my-5">
-            <div aria-hidden className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-brand-100" />
-            </div>
-            <div className="relative flex justify-center">
-              <span className="bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-400">
-                or with email
-              </span>
-            </div>
-          </div>
-
-          <form className="space-y-4" onSubmit={handleSubmit}>
+          <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-brand-700">
                 Email
@@ -209,6 +192,17 @@ export function LoginPage() {
                 </>
               )}
             </Button>
+
+            {mode === "signin" && (
+              <button
+                type="button"
+                onClick={handleMagicLink}
+                disabled={submitting}
+                className="w-full text-center text-sm font-semibold text-brand-700 hover:text-brand-900 disabled:opacity-50"
+              >
+                Email me a sign-in link instead →
+              </button>
+            )}
           </form>
 
           <div className="mt-6 text-center text-sm text-brand-500">
