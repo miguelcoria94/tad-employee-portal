@@ -35,6 +35,14 @@ async function buildServer() {
     origin: (origin, cb) => {
       if (!origin) return cb(null, true);
       if (config.allowedOrigins.includes(origin)) return cb(null, true);
+      // Dev convenience: accept any http://localhost:<port> origin so Vite's
+      // auto-port-bumping doesn't require updating ALLOWED_ORIGINS by hand.
+      if (
+        !config.isProd &&
+        /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)
+      ) {
+        return cb(null, true);
+      }
       cb(new Error("Origin not allowed"), false);
     },
     credentials: true,

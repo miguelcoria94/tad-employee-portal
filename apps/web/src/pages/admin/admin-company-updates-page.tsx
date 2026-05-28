@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { RichTextEditor } from "@/components/editor/rich-text-editor";
 import { RichTextRenderer } from "@/components/editor/rich-text-renderer";
+import { htmlToExcerpt } from "@/lib/excerpt";
 import { cn } from "@/lib/utils";
 
 type Editing =
@@ -130,7 +131,7 @@ export function AdminCompanyUpdatesPage() {
                   </p>
                   {u.body && (
                     <p className="mt-1 line-clamp-2 text-xs text-brand-500">
-                      {u.body}
+                      {htmlToExcerpt(u.body, 180)}
                     </p>
                   )}
                 </div>

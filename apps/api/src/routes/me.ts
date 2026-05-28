@@ -1,7 +1,9 @@
 import type { FastifyPluginAsync } from "fastify";
+import { updateMyProfileSchema } from "@tadhealth/shared";
 import {
   ensureProfile,
   getProfileWithEmployee,
+  updateMyProfile,
 } from "../services/profiles.js";
 
 export const meRoutes: FastifyPluginAsync = async (app) => {
@@ -29,6 +31,22 @@ export const meRoutes: FastifyPluginAsync = async (app) => {
     return {
       profile: result.profile,
       employee: result.employee ?? null,
+      manager: result.manager ?? null,
     };
   });
+
+  app.patch(
+    "/me/profile",
+    { preHandler: [app.requireAuth] },
+    async (req) => {
+      const input = updateMyProfileSchema.parse(req.body);
+      const result = await updateMyProfile(req.user!.sub, input);
+      if (!result) {
+        throw app.httpErrors.notFound(
+          "No employee profile linked to this account",
+        );
+      }
+      return { employee: result.employee, changedFields: result.changes };
+    },
+  );
 };

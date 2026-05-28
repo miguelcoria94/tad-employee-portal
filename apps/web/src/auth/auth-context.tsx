@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { api, ApiError } from "@/lib/api";
 import type { MeResponse } from "@tadhealth/shared";
@@ -19,6 +19,7 @@ type AuthContextValue = {
   me: MeResponse | null;
   isAdmin: boolean;
   signOut: () => Promise<void>;
+  refresh: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -26,6 +27,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const qc = useQueryClient();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -61,8 +63,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signOut: async () => {
         await supabase.auth.signOut();
       },
+      refresh: async () => {
+        await qc.invalidateQueries({ queryKey: ["me"] });
+      },
     }),
-    [session, loading, me],
+    [session, loading, me, qc],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

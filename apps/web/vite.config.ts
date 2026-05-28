@@ -12,7 +12,9 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5173,
-    strictPort: true,
+    // Preferred dev port. strictPort:false lets Vite auto-bump to the next
+    // free port if this one is taken (e.g. an orphaned dev server).
+    port: 5180,
+    strictPort: false,
   },
 });

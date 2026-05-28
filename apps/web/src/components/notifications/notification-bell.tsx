@@ -8,6 +8,7 @@ import {
   FolderOpen,
   Megaphone,
   MessageSquare,
+  UserCog,
 } from "lucide-react";
 import type { NotificationKind, NotificationRow } from "@tadhealth/shared";
 import { useNotifications } from "@/hooks/use-notifications";
@@ -19,6 +20,7 @@ const ICON_BY_KIND: Record<NotificationKind, typeof Bell> = {
   new_survey: ClipboardList,
   new_resource: FolderOpen,
   survey_response: MessageSquare,
+  profile_update: UserCog,
   changelog: Bell,
 };
 

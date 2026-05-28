@@ -11,6 +11,7 @@ const links = [
   { to: "/departments", label: "Departments" },
   { to: "/directory", label: "Team Directory" },
   { to: "/surveys", label: "Surveys" },
+  { to: "/help", label: "Help" },
 ];
 
 export function Topbar() {
@@ -67,15 +68,21 @@ export function Topbar() {
 
         <div className="ml-auto flex items-center gap-3">
           <NotificationBell />
-          <div className="hidden text-right md:block">
-            <p className="text-xs text-brand-500">
-              {me?.employee?.title ?? "Welcome"}
-            </p>
-            <p className="text-sm font-semibold text-brand-900">
-              {me?.employee?.firstName ?? "Hello"}
-            </p>
-          </div>
-          <Avatar initials={initials.toUpperCase()} />
+          <NavLink
+            to="/me"
+            className="flex items-center gap-3 rounded-lg p-1 transition-colors hover:bg-brand-50"
+            title="Your profile"
+          >
+            <div className="hidden text-right md:block">
+              <p className="text-xs text-brand-500">
+                {me?.employee?.title ?? "Welcome"}
+              </p>
+              <p className="text-sm font-semibold text-brand-900">
+                {me?.employee?.firstName ?? "Hello"}
+              </p>
+            </div>
+            <Avatar initials={initials.toUpperCase()} />
+          </NavLink>
           <button
             onClick={async () => {
               await signOut();

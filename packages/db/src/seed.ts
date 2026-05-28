@@ -62,53 +62,86 @@ if (!url) throw new Error("DIRECT_URL (or DATABASE_URL) is required");
 const sql = postgres(url, { max: 1, prepare: false });
 const db = drizzle(sql);
 
-const seedEmployees: NewEmployee[] = [
-  { firstName: "Megan", title: "Regional Director of Partnerships, Northern California", department: "Sales", email: "megan@tadhealth.com" },
-  { firstName: "Jen", title: "Head of Product Education & Partnerships", department: "Customer Experience", email: "jen@tadhealth.com" },
-  { firstName: "Heather", title: "Director of Client Success", department: "Customer Experience", email: "heather@tadhealth.com" },
-  { firstName: "Nick", title: "VP Client Success", department: "Customer Experience", email: "nick@tadhealth.com" },
-  { firstName: "Alex", title: "Chief of Healthcare Policy & Medicaid", department: "Policy & TA", email: "alex@tadhealth.com" },
-  { firstName: "Dimitri", title: "Senior Software Engineer", department: "Engineering", subDepartment: "Product & Engineering", email: "dmitriy@tadhealth.com" },
-  { firstName: "Katie", lastName: "Dascomb", title: "Client Experience Specialist", department: "Customer Experience", email: "katie.dascomb@tadhealth.com" },
-  { firstName: "Santi", title: "VP Strategic Initiatives", department: "Customer Experience", email: "santi@tadhealth.com" },
-  { firstName: "Camille", title: "Client Experience Specialist", department: "Customer Experience", email: "camille@tadhealth.com" },
-  { firstName: "Brendan", title: "VP of Operations", department: "Operations", email: "brendan@tadhealth.com" },
-  { firstName: "Pia", title: "Senior Advisor", department: "Policy & TA", email: "pia@tadhealth.com" },
-  { firstName: "Claire", title: "EA & Operations Manager", department: "Operations", subDepartment: "Careers & HR", email: "claire@tadhealth.com" },
-  { firstName: "Josh", lastName: "Frankamp", title: "Senior Software Engineer", department: "Engineering", subDepartment: "Product & Engineering", email: "josh.frankamp@tadhealth.com" },
-  { firstName: "Jordan", lastName: "Gonzales", title: "Client Success Manager", department: "Customer Experience", email: "jordan.gonzales@tadhealth.com" },
-  { firstName: "Seth", title: "Software Engineer", department: "Engineering", subDepartment: "Product & Engineering", email: "seth@tadhealth.com" },
-  { firstName: "Ella", title: "Client Experience Specialist", department: "Customer Experience", email: "ella@tadhealth.com" },
-  { firstName: "Ben", title: "CEO & Founder", department: "Executive", email: "ben@tadhealth.com" },
-  { firstName: "Alon", title: "VP of Product", department: "Engineering", email: "alon@tadhealth.com" },
-  { firstName: "Scott", title: "Chief Business Officer", department: "Sales", email: "scott@tadhealth.com" },
-  { firstName: "Shea", title: "Senior Software Engineer", department: "Engineering", subDepartment: "Product & Engineering", email: "shea@tadhealth.com" },
-  { firstName: "Mario", title: "Chief Customer Officer", department: "Customer Experience", email: "mario@tadhealth.com" },
-  { firstName: "Zoltan", title: "Chief Technology Officer", department: "Engineering", subDepartment: "Product & Engineering", email: "zoltan@tadhealth.com" },
-  { firstName: "Nat", title: "Senior Software Engineer", department: "Engineering", subDepartment: "Product & Engineering", email: "nat@tadhealth.com" },
-  { firstName: "Anna", title: "UX Designer", department: "Product & Design", subDepartment: "Product & Engineering", email: "anna@tadhealth.com" },
-  { firstName: "Brian", title: "Head of Marketing", department: "Marketing", email: "brian@tadhealth.com" },
-  { firstName: "Gav", title: "Data Integration Engineer", department: "Customer Experience", email: "gav@tadhealth.com" },
-  { firstName: "Chinedu", title: "Strategic Partnerships Associate", department: "Sales", email: "chinedu@tadhealth.com" },
-  { firstName: "Matt", title: "SVP of Growth", department: "Sales", email: "matt@tadhealth.com" },
-  { firstName: "Marcella", title: "Head of Mental Health Programs and Policy", department: "Policy & TA", email: "marcella@tadhealth.com" },
-  { firstName: "Melissa", title: "Associate Software Engineer", department: "Engineering", subDepartment: "Product & Engineering", email: "melissa@tadhealth.com" },
-  { firstName: "Jill", title: "Marketing Associate", department: "Marketing", email: "jill@tadhealth.com" },
-  { firstName: "Leigh", title: "Client Success Manager", department: "Customer Experience", email: "leigh@tadhealth.com" },
-  { firstName: "Josh", title: "Senior Dev Ops Engineer", department: "Engineering", subDepartment: "Product & Engineering", email: "josh@tadhealth.com" },
-  { firstName: "Sandi", title: "Client Success Manager", department: "Customer Experience", email: "sandi@tadhealth.com" },
-  { firstName: "Gabriella", title: "Regional Director of Partnerships, Central California", department: "Sales", email: "gabriella@tadhealth.com" },
-  { firstName: "Brandon", lastName: "Settje", title: "Data Integration Engineer", department: "Customer Experience", email: "brandon.settje@tadhealth.com" },
-  { firstName: "Alyssa", title: "Client Success Manager", department: "Customer Experience", email: "alyssa@tadhealth.com" },
-  { firstName: "Clarinne", title: "UX Designer", department: "Product & Design", subDepartment: "Product & Engineering", email: "clarinne@tadhealth.com" },
-  { firstName: "Victoria", title: "Marketing Manager", department: "Marketing", email: "victoria@tadhealth.com" },
-  { firstName: "Mary", title: "Client Success Manager", department: "Customer Experience", email: "mary@tadhealth.com" },
-  { firstName: "Autumn", title: "Client Success Manager", department: "Customer Experience", email: "autumn@tadhealth.com" },
-  { firstName: "Alix", title: "Demand Gen / Marketing Ops", department: "Marketing", email: "alix@tadhealth.com" },
-  { firstName: "Cam", title: "Head of Product Experience", department: "Product & Design", subDepartment: "Product & Engineering", email: "cam@tadhealth.com" },
-  { firstName: "Jess", title: "Manager Customer Experience and Support", department: "Customer Experience", email: "jessica@tadhealth.com" },
-  { firstName: "Ron", title: "Regional Director of Partnerships, Southern California", department: "Sales", email: "ron@tadhealth.com" },
-  { firstName: "Miguel", lastName: "Coria", title: "Software Engineer", department: "Engineering", subDepartment: "Product & Engineering", email: "miguel@tadhealth.com" },
+// Per Claire's roster (May 2026). `managerEmail` is used in a 2nd pass to
+// set managerId after every row exists; it isn't a real column.
+type SeedEmployee = NewEmployee & { managerEmail?: string };
+
+const seedEmployees: SeedEmployee[] = [
+  // Executive
+  { firstName: "Ben",     lastName: "Greiner",   title: "CEO & Founder",                                 department: "Executive",           location: "Newport Beach",         email: "ben@tadhealth.com" },
+  { firstName: "Tiffany", lastName: "Lee",       title: "Chief Financial Officer",                       department: "Executive",           location: "San Diego",             email: "tiffany@tadhealth.com",        managerEmail: "ben@tadhealth.com" },
+  { firstName: "Haley",   lastName: "Engstrom",  title: "Chief of Staff",                                department: "Executive",           location: "Newport Beach, CA",     email: "haley@tadhealth.com",          managerEmail: "ben@tadhealth.com" },
+
+  // Customer Experience leadership + team
+  { firstName: "Mario",    lastName: "Joy",        title: "Chief Customer Officer",                department: "Customer Experience", location: "North Carolina",     email: "mario@tadhealth.com",      managerEmail: "ben@tadhealth.com" },
+  { firstName: "Nick",     lastName: "Bingaman",   title: "Vice President, Client Success",        department: "Customer Experience", location: "New York",           email: "nick@tadhealth.com",       managerEmail: "mario@tadhealth.com" },
+  { firstName: "Santi",    lastName: "Dewa Ayu",   title: "VP, Strategic Initiatives",             department: "Customer Experience", location: "Venice, CA",         email: "santi@tadhealth.com",      managerEmail: "mario@tadhealth.com" },
+  { firstName: "Jennifer", lastName: "Athanacio",  title: "Head of Product Education & Partnerships", department: "Customer Experience", location: "Bay Area",        email: "jen@tadhealth.com",        managerEmail: "mario@tadhealth.com" },
+  { firstName: "Heather",  lastName: "Belthoff",   title: "Customer Success Manager",              department: "Customer Experience", location: "San Diego",          email: "heather@tadhealth.com",    managerEmail: "mario@tadhealth.com" },
+  { firstName: "Jareena",  lastName: "Silva",      title: "Client Experience Manager",             department: "Customer Experience", location: "Azusa, CA",          email: "jareena@tadhealth.com",    managerEmail: "mario@tadhealth.com" },
+  { firstName: "Jade",     lastName: "Godoy",      title: "Client Experience Specialist",          department: "Customer Experience", location: "Oxnard, CA",         email: "jade@tadhealth.com",       managerEmail: "jareena@tadhealth.com" },
+  { firstName: "Ella",     lastName: "Green",      title: "Customer Experience Specialist",        department: "Customer Experience", location: "San Diego, CA",      email: "ella@tadhealth.com",       managerEmail: "jessica@tadhealth.com" },
+  { firstName: "Camille",  lastName: "Duale",      title: "Customer Experience Specialist",        department: "Customer Experience", location: "Cypress, CA",        email: "camille@tadhealth.com",    managerEmail: "jessica@tadhealth.com" },
+  { firstName: "Alyssa",   lastName: "Sollitt",    title: "Customer Success Manager",              department: "Customer Experience", location: "San Francisco",      email: "alyssa@tadhealth.com",     managerEmail: "mario@tadhealth.com" },
+  { firstName: "Autumn",   lastName: "Webb",       title: "Customer Success Manager",              department: "Customer Experience", location: "San Diego",          email: "autumn@tadhealth.com",     managerEmail: "heather@tadhealth.com" },
+  { firstName: "Jordan",   lastName: "Gonzales",   title: "Customer Success Manager",              department: "Customer Experience", location: "Rancho Santa Margarita, CA", email: "jordan.gonzales@tadhealth.com", managerEmail: "mario@tadhealth.com" },
+  { firstName: "Leigh",    lastName: "Sarnicola-Smith", title: "Client Success Manager",           department: "Customer Experience", location: "Los Angeles, CA",    email: "leigh@tadhealth.com",      managerEmail: "mario@tadhealth.com" },
+  { firstName: "Mary",     lastName: "Vinzon",     title: "Client Success Manager",                department: "Customer Experience", location: "Los Angeles, CA",    email: "mary@tadhealth.com",       managerEmail: "mario@tadhealth.com" },
+  { firstName: "Sandi",    lastName: "Seel",       title: "Customer Success Manager",              department: "Customer Experience", location: "Thousand Oaks",      email: "sandi@tadhealth.com",      managerEmail: "mario@tadhealth.com" },
+  { firstName: "Gavril",   lastName: "Moreno",     title: "Data Integration Engineer",             department: "Customer Experience", location: "San Diego",          email: "gav@tadhealth.com",        managerEmail: "santi@tadhealth.com" },
+  { firstName: "Jessica",  lastName: "Williams",   title: "Technical Project Manager",             department: "Customer Experience", location: "Los Angeles, CA",    email: "jessica.williams@tadhealth.com", managerEmail: "santi@tadhealth.com" },
+  { firstName: "Chloe",    lastName: "Geissler",   title: "Training Support Specialist",           department: "Customer Experience", location: "Venice, CA",         email: "chloe@tadhealth.com",      managerEmail: "jen@tadhealth.com" },
+  { firstName: "Katie",    lastName: "Dascomb",    title: "Training Logistics Coordinator",        department: "Customer Experience", location: "Union City, CA",     email: "katie.dascomb@tadhealth.com", managerEmail: "jen@tadhealth.com" },
+  { firstName: "Tammy",    lastName: "Holen",      title: "Head of Provider Solutions",            department: "Customer Experience", location: "O Fallon, MO",       email: "tammy@tadhealth.com",      managerEmail: "ben@tadhealth.com" },
+
+  // Sales
+  { firstName: "Scott",     lastName: "Harvey",       title: "Chief Business Officer",                department: "Sales",   location: "San Clemente",   email: "scott@tadhealth.com",     managerEmail: "ben@tadhealth.com" },
+  { firstName: "Brent",     lastName: "Layton",       title: "Chief of Healthcare Sales & Strategy",  department: "Sales",   location: "Atlanta, GA",    email: "brent@tadhealth.com",     managerEmail: "ben@tadhealth.com" },
+  { firstName: "Matt",      lastName: "Pizzo",        title: "VP of Growth",                          department: "Sales",   location: "Buffalo, NY",    email: "matt@tadhealth.com",      managerEmail: "scott@tadhealth.com" },
+  { firstName: "Megan",     lastName: "Anderson",     title: "Regional Sales Director",               department: "Sales",   location: "Acampo, CA",     email: "megan@tadhealth.com",     managerEmail: "matt@tadhealth.com" },
+  { firstName: "Ron",       lastName: "Williams",     title: "Regional Sales Director",               department: "Sales",   location: "San Diego",      email: "ron@tadhealth.com",       managerEmail: "mario@tadhealth.com" },
+  { firstName: "Gabriella", lastName: "Serrato",      title: "Regional Director of Partnerships",     department: "Sales",   location: "Los Angeles, CA",email: "gabriella@tadhealth.com", managerEmail: "matt@tadhealth.com" },
+
+  // Marketing
+  { firstName: "Brian",    lastName: "Mckenzie",   title: "Head of Marketing",          department: "Marketing", location: "Orange",        email: "brian@tadhealth.com",    managerEmail: "ben@tadhealth.com" },
+  { firstName: "Victoria", lastName: "Vega",       title: "Marketing Manager",          department: "Marketing", location: "Long Beach",    email: "victoria@tadhealth.com", managerEmail: "brian@tadhealth.com" },
+  { firstName: "Jill",     lastName: "Sanders",    title: "Marketing Associate",        department: "Marketing", location: "El Cajon, CA",  email: "jill@tadhealth.com",     managerEmail: "brian@tadhealth.com" },
+  { firstName: "Alix",     lastName: "Webster",    title: "Demand Gen / Marketing Ops", department: "Marketing", location: "Garden Grove, CA", email: "alix@tadhealth.com",   managerEmail: "brian@tadhealth.com" },
+
+  // Policy & TA
+  { firstName: "Alex",     lastName: "Briscoe",    title: "Chief of Healthcare Policy & Medicaid",            department: "Policy & TA", location: "Bay Area",         email: "alex@tadhealth.com",     managerEmail: "ben@tadhealth.com" },
+  { firstName: "Marcella", lastName: "Rodriguez",  title: "Director of Mental Health Programs and Policy",    department: "Policy & TA", location: "Sacramento, CA",   email: "marcella@tadhealth.com", managerEmail: "mario@tadhealth.com" },
+  { firstName: "Mikevia",  lastName: "Kiles",      title: "Program Analyst, Policy & Technical Assistance",   department: "Policy & TA", location: "West Sacramento",  email: "mikevia@tadhealth.com",  managerEmail: "marcella@tadhealth.com" },
+
+  // Engineering / Product & Engineering
+  { firstName: "Zoltan",   lastName: "Kurczveil",  title: "Chief Technology Officer",            department: "Engineering",     subDepartment: "Product & Engineering", location: "Northern CA",   email: "zoltan@tadhealth.com",    managerEmail: "ben@tadhealth.com" },
+  { firstName: "Alon",     lastName: "Hartuv",     title: "VP of Product",                       department: "Engineering",     subDepartment: "Product & Engineering", location: "Malibu, CA",    email: "alon@tadhealth.com",      managerEmail: "zoltan@tadhealth.com" },
+  { firstName: "Helen",    lastName: "Conroe",     title: "Senior Engineering Project Manager", department: "Engineering",     subDepartment: "Product & Engineering", location: "Palo Alto, CA", email: "helen@tadhealth.com",     managerEmail: "zoltan@tadhealth.com" },
+  { firstName: "Dimitri",  lastName: "Byrulin",    title: "Senior Software Engineer",            department: "Engineering",     subDepartment: "Product & Engineering", location: "Laguna Hills",  email: "dmitriy@tadhealth.com",   managerEmail: "zoltan@tadhealth.com" },
+  { firstName: "Josh",     lastName: "Frankamp",   title: "Senior Software Engineer",            department: "Engineering",     subDepartment: "Product & Engineering", location: "Newberg, OR",   email: "josh.frankamp@tadhealth.com", managerEmail: "zoltan@tadhealth.com" },
+  { firstName: "Nat",      lastName: "Laughlin",   title: "Senior Software Engineer",            department: "Engineering",     subDepartment: "Product & Engineering", location: "Bay Area",      email: "nat@tadhealth.com",       managerEmail: "zoltan@tadhealth.com" },
+  { firstName: "Shea",     lastName: "Ivey",       title: "Senior Software Engineer",            department: "Engineering",     subDepartment: "Product & Engineering", location: "Portland, OR",  email: "shea@tadhealth.com",      managerEmail: "zoltan@tadhealth.com" },
+  { firstName: "Seth",     lastName: "Gonzales",   title: "Software Engineer",                   department: "Engineering",     subDepartment: "Product & Engineering", location: "Portland, OR",  email: "seth@tadhealth.com",      managerEmail: "zoltan@tadhealth.com" },
+  { firstName: "Melissa",  lastName: "Salazar",    title: "Associate Software Engineer",         department: "Engineering",     subDepartment: "Product & Engineering", location: "Inglewood, CA", email: "melissa@tadhealth.com",   managerEmail: "zoltan@tadhealth.com" },
+  { firstName: "Josh",     lastName: "Scheel",     title: "Senior Dev Ops Engineer",             department: "Engineering",     subDepartment: "Product & Engineering", location: "Colusa, CA",    email: "josh@tadhealth.com",      managerEmail: "zoltan@tadhealth.com" },
+  { firstName: "Dani",     lastName: "Michael",    title: "Analytics Engineer",                  department: "Engineering",     subDepartment: "Product & Engineering", location: "Seattle, WA",   email: "dani@tadhealth.com",      managerEmail: "brendan@tadhealth.com" },
+  { firstName: "Miguel",   lastName: "Coria",      title: "Software Engineer",                   department: "Engineering",     subDepartment: "Product & Engineering", location: "San Francisco, CA", email: "miguel@tadhealth.com", managerEmail: "zoltan@tadhealth.com" },
+
+  // Product & Design
+  { firstName: "Cam",      lastName: "Wilcox",     title: "Head of Product",  department: "Product & Design", subDepartment: "Product & Engineering", location: "San Diego", email: "cam@tadhealth.com",  managerEmail: "zoltan@tadhealth.com" },
+  { firstName: "Anna",     lastName: "Mars",       title: "UX/UI Designer",   department: "Product & Design", subDepartment: "Product & Engineering", location: "Bay Area",  email: "anna@tadhealth.com", managerEmail: "cam@tadhealth.com" },
+
+  // Operations
+  { firstName: "Brendan",  lastName: "Duncan",     title: "VP of Operations",          department: "Operations", location: "North Carolina", email: "brendan@tadhealth.com", managerEmail: "ben@tadhealth.com" },
+  { firstName: "Claire",   lastName: "Farmer",     title: "EA & Operations Manager",   department: "Operations", subDepartment: "Careers & HR", location: "Newport Beach", email: "claire@tadhealth.com", managerEmail: "ben@tadhealth.com" },
+
+  // Carried over from the prior seed but not in Claire's May roster — kept so
+  // existing accounts / survey responses don't break. Title/department untouched.
+  { firstName: "Jess",     title: "Manager Customer Experience and Support", department: "Customer Experience", email: "jessica@tadhealth.com" },
+  { firstName: "Pia",      title: "Senior Advisor",                          department: "Policy & TA",         email: "pia@tadhealth.com" },
+  { firstName: "Chinedu",  title: "Strategic Partnerships Associate",        department: "Sales",               email: "chinedu@tadhealth.com" },
+  { firstName: "Brandon",  lastName: "Settje", title: "Data Integration Engineer", department: "Customer Experience", email: "brandon.settje@tadhealth.com" },
+  { firstName: "Clarinne", title: "UX Designer",                             department: "Product & Design",    subDepartment: "Product & Engineering", email: "clarinne@tadhealth.com" },
 ];
 
 const seedDepartments: NewDepartment[] = [
@@ -661,6 +694,65 @@ const departmentSurveys: SeedSurveySpec[] = [
       },
     ],
   },
+  {
+    title: "Engineering: Developer Experience Pulse",
+    description:
+      "<p>How's the day-to-day of building at TadHealth? Anonymous so you can call out what's actually slowing you down — results are visible to the whole engineering team so we can act on them together.</p>",
+    isAnonymous: true,
+    showResultsToAll: true,
+    targetDepartments: ["Engineering"],
+    opensAt: new Date("2026-05-19T00:00:00Z"),
+    closesAt: new Date("2026-06-02T00:00:00Z"),
+    questions: [
+      {
+        prompt: "How is your day-to-day dev experience right now?",
+        type: "rating",
+        isRequired: true,
+      },
+      {
+        prompt:
+          "Which area is slowing you down the most?",
+        type: "single_choice",
+        options: [
+          "Local dev environment",
+          "Build / CI speed",
+          "Test infrastructure",
+          "Code review throughput",
+          "Documentation",
+          "On-call / observability tooling",
+          "Cross-team coordination",
+        ],
+        isRequired: true,
+      },
+      {
+        prompt:
+          "Where should we invest engineering time this quarter? (pick all that apply)",
+        type: "multi_choice",
+        options: [
+          "Test infrastructure",
+          "Performance / scaling",
+          "Refactoring / tech debt",
+          "New features",
+          "Developer tooling",
+          "Documentation",
+          "Mentoring / career growth",
+        ],
+      },
+      {
+        prompt: "What's your favorite recent improvement to how we work?",
+        type: "long_text",
+      },
+      {
+        prompt: "What's the one thing you wish we'd fix?",
+        type: "long_text",
+      },
+      {
+        prompt:
+          "How likely are you to recommend our codebase to a new engineering hire?",
+        type: "rating",
+      },
+    ],
+  },
 ];
 
 async function seedDepartmentSurveys() {
@@ -849,10 +941,48 @@ async function run() {
     .onConflictDoNothing({ target: departments.name });
 
   console.log(`Seeding ${seedEmployees.length} employees…`);
-  await db
-    .insert(employees)
-    .values(seedEmployees.map((e, i) => ({ ...e, sortOrder: i })))
-    .onConflictDoNothing({ target: employees.email });
+  // Pass 1: upsert every employee row from Claire's roster. Refresh the
+  // columns the seed owns (name/title/dept/location) so re-running the seed
+  // applies title/location updates; leave bio/phone (admin-edited) alone.
+  for (let i = 0; i < seedEmployees.length; i++) {
+    const { managerEmail: _drop, ...row } = seedEmployees[i]!;
+    void _drop;
+    await db
+      .insert(employees)
+      .values({ ...row, sortOrder: i })
+      .onConflictDoUpdate({
+        target: employees.email,
+        set: {
+          firstName: row.firstName,
+          lastName: row.lastName ?? null,
+          title: row.title,
+          department: row.department,
+          subDepartment: row.subDepartment ?? null,
+          location: row.location ?? null,
+          sortOrder: i,
+          updatedAt: new Date(),
+        },
+      });
+  }
+
+  // Pass 2: wire managerId. Build email -> id map, then patch each row whose
+  // seed entry declared a managerEmail. Self-references are ignored.
+  console.log("Linking managers…");
+  const allEmployees = await db
+    .select({ id: employees.id, email: employees.email })
+    .from(employees);
+  const idByEmail = new Map(allEmployees.map((e) => [e.email, e.id]));
+  for (const seed of seedEmployees) {
+    if (!seed.managerEmail) continue;
+    if (seed.managerEmail === seed.email) continue;
+    const employeeId = idByEmail.get(seed.email);
+    const managerId = idByEmail.get(seed.managerEmail);
+    if (!employeeId || !managerId) continue;
+    await db
+      .update(employees)
+      .set({ managerId, updatedAt: new Date() })
+      .where(eq(employees.id, employeeId));
+  }
 
   await seedEventsIfEmpty();
   await seedSurveysIfEmpty();

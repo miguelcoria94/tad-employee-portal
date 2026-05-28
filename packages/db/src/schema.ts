@@ -30,6 +30,7 @@ export const employees = pgTable(
     avatarUrl: text("avatar_url"),
     bio: text("bio"),
     phone: text("phone"),
+    location: text("location"),
     startDate: date("start_date"),
     managerId: uuid("manager_id").references((): any => employees.id, {
       onDelete: "set null",
