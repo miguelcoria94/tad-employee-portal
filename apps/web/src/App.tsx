@@ -14,6 +14,7 @@ import { SurveyResultsPage } from "@/pages/survey-results-page";
 import { HelpPage } from "@/pages/help-page";
 import { NotificationsPage } from "@/pages/notifications-page";
 import { MePage } from "@/pages/me-page";
+import { TimeOffPage } from "@/pages/time-off-page";
 import { AdminLayout } from "@/pages/admin/admin-layout";
 import { AdminEmployeesPage } from "@/pages/admin/admin-employees-page";
 import { AdminDepartmentsPage } from "@/pages/admin/admin-departments-page";
@@ -53,6 +54,7 @@ export function App() {
         <Route path="/help" element={<HelpPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/me" element={<MePage />} />
+        <Route path="/time-off" element={<TimeOffPage />} />
         <Route
           path="/admin"
           element={
