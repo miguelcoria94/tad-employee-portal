@@ -29,10 +29,10 @@ export function Topbar() {
     <header className="sticky top-0 z-30 border-b border-brand-100 bg-white/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-6">
         <NavLink to="/" className="shrink-0">
-          <Logo />
+          <Logo tagline={false} />
         </NavLink>
 
-        <nav className="hidden items-center gap-0.5 lg:flex">
+        <nav className="hidden min-w-0 items-center gap-0.5 lg:flex">
           {links.map((l) => (
             <NavLink
               key={l.to}
@@ -40,7 +40,7 @@ export function Topbar() {
               end={l.end}
               className={({ isActive }) =>
                 cn(
-                  "whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  "whitespace-nowrap rounded-lg px-2.5 py-2 text-sm font-medium transition-colors",
                   isActive
                     ? "bg-brand-50 text-brand-900"
                     : "text-brand-600 hover:bg-brand-50 hover:text-brand-900",
@@ -55,7 +55,7 @@ export function Topbar() {
               to="/admin"
               className={({ isActive }) =>
                 cn(
-                  "ml-1 inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  "ml-1 inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-2 text-sm font-medium transition-colors",
                   isActive
                     ? "bg-accent-100 text-accent-800"
                     : "text-accent-700 hover:bg-accent-50",
@@ -68,17 +68,17 @@ export function Topbar() {
           )}
         </nav>
 
-        <div className="ml-auto flex items-center gap-3">
-          <div className="hidden xl:flex xl:w-64">
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          <div className="hidden xl:flex xl:w-56">
             <GlobalSearch />
           </div>
           <NotificationBell />
           <NavLink
             to="/me"
-            className="flex items-center gap-3 rounded-lg p-1 transition-colors hover:bg-brand-50"
+            className="flex items-center gap-2.5 rounded-lg p-1 transition-colors hover:bg-brand-50"
             title="Your profile"
           >
-            <div className="hidden text-right xl:block">
+            <div className="hidden text-right 2xl:block">
               <p className="whitespace-nowrap text-xs text-brand-500">
                 {me?.employee?.title ?? "Welcome"}
               </p>
