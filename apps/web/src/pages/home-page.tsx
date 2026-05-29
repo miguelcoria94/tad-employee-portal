@@ -3,6 +3,7 @@ import type { DepartmentRow } from "@tadhealth/shared";
 import { api } from "@/lib/api";
 import { Hero } from "@/components/home/hero";
 import { DepartmentList } from "@/components/home/department-list";
+import { UpcomingWidget } from "@/components/home/upcoming-widget";
 import { Testimonial } from "@/components/home/testimonial";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -15,6 +16,7 @@ export function HomePage() {
   return (
     <>
       <Hero />
+      <UpcomingWidget />
       {isLoading ? (
         <div className="grid place-items-center py-24">
           <Spinner />

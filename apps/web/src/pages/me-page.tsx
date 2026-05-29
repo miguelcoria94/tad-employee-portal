@@ -21,6 +21,8 @@ type Draft = {
   location: string;
   phone: string;
   bio: string;
+  birthday: string;
+  startDate: string;
 };
 
 function draftFromEmployee(e: Employee | null | undefined): Draft {
@@ -28,6 +30,8 @@ function draftFromEmployee(e: Employee | null | undefined): Draft {
     location: e?.location ?? "",
     phone: e?.phone ?? "",
     bio: e?.bio ?? "",
+    birthday: e?.birthday ?? "",
+    startDate: e?.startDate ?? "",
   };
 }
 
@@ -82,13 +86,17 @@ export function MePage() {
   const dirty =
     (draft.location ?? "") !== (e.location ?? "") ||
     (draft.phone ?? "") !== (e.phone ?? "") ||
-    (draft.bio ?? "") !== (e.bio ?? "");
+    (draft.bio ?? "") !== (e.bio ?? "") ||
+    (draft.birthday ?? "") !== (e.birthday ?? "") ||
+    (draft.startDate ?? "") !== (e.startDate ?? "");
 
   function submit() {
     save.mutate({
       location: draft.location.trim() || null,
       phone: draft.phone.trim() || null,
       bio: draft.bio.trim() || null,
+      birthday: draft.birthday || null,
+      startDate: draft.startDate || null,
     });
   }
 
@@ -188,6 +196,39 @@ export function MePage() {
                 onChange={(e) => setDraft({ ...draft, phone: e.target.value })}
               />
             </label>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="flex flex-col gap-1.5">
+                <span className="text-xs font-medium text-brand-700">
+                  Birthday
+                </span>
+                <Input
+                  type="date"
+                  value={draft.birthday}
+                  onChange={(e) =>
+                    setDraft({ ...draft, birthday: e.target.value })
+                  }
+                />
+                <span className="text-[11px] text-brand-400">
+                  Year is ignored when displayed — only month + day are shown.
+                </span>
+              </label>
+              <label className="flex flex-col gap-1.5">
+                <span className="text-xs font-medium text-brand-700">
+                  Start date at TadHealth
+                </span>
+                <Input
+                  type="date"
+                  value={draft.startDate}
+                  onChange={(e) =>
+                    setDraft({ ...draft, startDate: e.target.value })
+                  }
+                />
+                <span className="text-[11px] text-brand-400">
+                  Powers your work-iversary on the home page.
+                </span>
+              </label>
+            </div>
 
             <label className="flex flex-col gap-1.5">
               <span className="text-xs font-medium text-brand-700">Bio</span>

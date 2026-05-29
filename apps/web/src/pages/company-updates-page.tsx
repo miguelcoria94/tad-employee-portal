@@ -1,6 +1,12 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Calendar, ExternalLink, MapPin } from "lucide-react";
+import {
+  ArrowLeft,
+  Calendar,
+  CalendarPlus,
+  ExternalLink,
+  MapPin,
+} from "lucide-react";
 import type { CompanyEvent, CompanyUpdate } from "@tadhealth/shared";
 import { api } from "@/lib/api";
 import { Spinner } from "@/components/ui/spinner";
@@ -8,6 +14,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { RichTextRenderer } from "@/components/editor/rich-text-renderer";
 import { htmlToExcerpt } from "@/lib/excerpt";
+import { downloadIcs } from "@/lib/ics";
 
 function formatLongDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", {
@@ -118,17 +125,27 @@ export function CompanyUpdatesPage() {
                             />
                           )}
                         </div>
-                        {e.url && (
-                          <a
-                            href={e.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-brand-100 px-3 py-1.5 text-xs font-semibold text-brand-700 hover:bg-brand-50"
+                        <div className="flex shrink-0 flex-col items-end gap-1.5">
+                          {e.url && (
+                            <a
+                              href={e.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 rounded-lg border border-brand-100 px-3 py-1.5 text-xs font-semibold text-brand-700 hover:bg-brand-50"
+                            >
+                              Open
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          )}
+                          <button
+                            onClick={() => downloadIcs(e)}
+                            className="inline-flex items-center gap-1 rounded-lg border border-brand-100 px-3 py-1.5 text-xs font-semibold text-brand-700 hover:bg-brand-50"
+                            title="Download .ics — opens in Google Calendar, Apple, Outlook, etc."
                           >
-                            Open
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        )}
+                            <CalendarPlus className="h-3 w-3" />
+                            Add to calendar
+                          </button>
+                        </div>
                       </div>
                     </li>
                   ))}

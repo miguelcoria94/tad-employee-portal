@@ -137,6 +137,20 @@ export async function updateMyProfile(
     patch.bio = input.bio ?? null;
     changes.push("bio");
   }
+  if (
+    input.birthday !== undefined &&
+    (input.birthday ?? null) !== before.birthday
+  ) {
+    patch.birthday = input.birthday ?? null;
+    changes.push("birthday");
+  }
+  if (
+    input.startDate !== undefined &&
+    (input.startDate ?? null) !== before.startDate
+  ) {
+    patch.startDate = input.startDate ?? null;
+    changes.push("start date");
+  }
 
   if (changes.length === 0) {
     return { employee: before, changes };

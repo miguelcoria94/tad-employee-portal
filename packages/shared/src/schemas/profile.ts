@@ -29,5 +29,15 @@ export const updateMyProfileSchema = z.object({
   location: z.string().max(120).nullable().optional(),
   phone: z.string().max(40).nullable().optional(),
   bio: z.string().max(2000).nullable().optional(),
+  birthday: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable()
+    .optional(),
+  startDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable()
+    .optional(),
 });
 export type UpdateMyProfileInput = z.infer<typeof updateMyProfileSchema>;
