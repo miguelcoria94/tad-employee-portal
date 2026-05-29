@@ -3,6 +3,7 @@ import { LogOut, ShieldCheck } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { Avatar } from "@/components/ui/avatar";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { GlobalSearch } from "@/components/shell/global-search";
 import { useAuth } from "@/auth/auth-context";
 import { cn } from "@/lib/utils";
 
@@ -68,6 +69,9 @@ export function Topbar() {
         </nav>
 
         <div className="ml-auto flex items-center gap-3">
+          <div className="hidden lg:flex lg:w-72">
+            <GlobalSearch />
+          </div>
           <NotificationBell />
           <NavLink
             to="/me"
