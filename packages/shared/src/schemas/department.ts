@@ -27,3 +27,21 @@ export type CreateDepartmentInput = z.infer<typeof createDepartmentSchema>;
 
 export const updateDepartmentSchema = createDepartmentSchema.partial();
 export type UpdateDepartmentInput = z.infer<typeof updateDepartmentSchema>;
+
+export const departmentManagerSchema = z.object({
+  userId: z.string().uuid(),
+  employeeId: z.string().uuid().nullable(),
+  firstName: z.string(),
+  lastName: z.string().nullable(),
+  title: z.string().nullable(),
+  email: z.string(),
+  avatarUrl: z.string().nullable(),
+});
+export type DepartmentManager = z.infer<typeof departmentManagerSchema>;
+
+export const addDepartmentManagerSchema = z.object({
+  employeeId: z.string().uuid(),
+});
+export type AddDepartmentManagerInput = z.infer<
+  typeof addDepartmentManagerSchema
+>;

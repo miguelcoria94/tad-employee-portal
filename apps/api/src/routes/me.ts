@@ -9,6 +9,7 @@ import {
   updateMyProfile,
   updateOnboarding,
 } from "../services/profiles.js";
+import { listManagedDepartmentIds } from "../services/department-managers.js";
 
 export const meRoutes: FastifyPluginAsync = async (app) => {
   app.get("/me", { preHandler: [app.requireAuth] }, async (req) => {
@@ -32,10 +33,13 @@ export const meRoutes: FastifyPluginAsync = async (app) => {
       );
     }
 
+    const managedDepartmentIds = await listManagedDepartmentIds(userId);
+
     return {
       profile: result.profile,
       employee: result.employee ?? null,
       manager: result.manager ?? null,
+      managedDepartmentIds,
     };
   });
 

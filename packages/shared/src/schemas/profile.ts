@@ -29,6 +29,7 @@ export const meResponseSchema = z.object({
       title: z.string(),
     })
     .nullable(),
+  managedDepartmentIds: z.array(z.string().uuid()),
 });
 export type MeResponse = z.infer<typeof meResponseSchema>;
 

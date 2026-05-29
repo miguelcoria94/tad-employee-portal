@@ -4,6 +4,7 @@ import {
   date,
   jsonb,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uuid,
@@ -98,6 +99,25 @@ export const departments = pgTable(
   },
   (t) => ({
     nameIdx: uniqueIndex("departments_name_idx").on(t.name),
+  }),
+);
+
+export const departmentManagers = pgTable(
+  "department_managers",
+  {
+    departmentId: uuid("department_id")
+      .notNull()
+      .references(() => departments.id, { onDelete: "cascade" }),
+    // profiles.id (auth user id). FK to profiles is added in policies SQL so
+    // we don't need to chain RLS through a join here.
+    userId: uuid("user_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.departmentId, t.userId] }),
+    userIdx: index("department_managers_user_idx").on(t.userId),
   }),
 );
 

@@ -1,7 +1,9 @@
 import { Link, Navigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Settings } from "lucide-react";
+import { useAuth } from "@/auth/auth-context";
 import {
+  type DepartmentManager,
   type DepartmentResourceRow,
   type DepartmentRow,
   type Employee,
@@ -20,6 +22,7 @@ import {
 
 export function DepartmentDetailPage() {
   const { slug } = useParams<{ slug: string }>();
+  const { me, isAdmin } = useAuth();
 
   const departmentsQ = useQuery<{ departments: DepartmentRow[] }>({
     queryKey: ["departments"],
@@ -48,6 +51,12 @@ export function DepartmentDetailPage() {
       ),
   });
 
+  const managersQ = useQuery<{ managers: DepartmentManager[] }>({
+    queryKey: ["department-managers", department?.id],
+    enabled: !!department,
+    queryFn: () => api(`/api/v1/departments/${department!.id}/managers`),
+  });
+
   if (departmentsQ.isLoading) {
     return (
       <div className="grid place-items-center py-24">
@@ -62,6 +71,12 @@ export function DepartmentDetailPage() {
 
   const employees = employeesQ.data?.employees ?? [];
   const resources = resourcesQ.data?.resources ?? [];
+  const managers = managersQ.data?.managers ?? [];
+  const canManage =
+    isAdmin || (me?.managedDepartmentIds.includes(department.id) ?? false);
+  const manageHref = isAdmin
+    ? `/admin/departments/${slugifyDepartment(department.name)}/resources`
+    : `/departments/${slugifyDepartment(department.name)}/manage`;
 
   return (
     <div className="bg-brand-mesh">
@@ -91,11 +106,34 @@ export function DepartmentDetailPage() {
             <h1 className="text-4xl font-extrabold tracking-tight text-brand-900 md:text-5xl">
               {department.name}
             </h1>
-            <Badge variant="highlight">{employees.length} teammates</Badge>
+            <div className="flex items-center gap-3">
+              {canManage && (
+                <Link
+                  to={manageHref}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-brand-200 bg-white px-3 py-1.5 text-xs font-semibold text-brand-700 hover:border-highlight-400 hover:text-highlight-700"
+                >
+                  <Settings className="h-3.5 w-3.5" />
+                  Manage resources
+                </Link>
+              )}
+              <Badge variant="highlight">{employees.length} teammates</Badge>
+            </div>
           </div>
           <p className="max-w-3xl text-lg text-brand-600">
             {department.description}
           </p>
+          {managers.length > 0 && (
+            <p className="text-sm text-brand-500">
+              <span className="font-semibold uppercase tracking-wider text-brand-400">
+                Managed by
+              </span>{" "}
+              {managers
+                .map((m) =>
+                  m.lastName ? `${m.firstName} ${m.lastName}` : m.firstName,
+                )
+                .join(", ")}
+            </p>
+          )}
         </header>
 
         <section className="mt-12">
