@@ -1,9 +1,13 @@
 import type { FastifyPluginAsync } from "fastify";
-import { updateMyProfileSchema } from "@tadhealth/shared";
+import {
+  updateMyProfileSchema,
+  updateOnboardingSchema,
+} from "@tadhealth/shared";
 import {
   ensureProfile,
   getProfileWithEmployee,
   updateMyProfile,
+  updateOnboarding,
 } from "../services/profiles.js";
 
 export const meRoutes: FastifyPluginAsync = async (app) => {
@@ -47,6 +51,18 @@ export const meRoutes: FastifyPluginAsync = async (app) => {
         );
       }
       return { employee: result.employee, changedFields: result.changes };
+    },
+  );
+
+  app.patch(
+    "/me/onboarding",
+    { preHandler: [app.requireAuth] },
+    async (req) => {
+      const input = updateOnboardingSchema.parse(req.body);
+      const row = await updateOnboarding(req.user!.sub, input);
+      if (!row)
+        throw app.httpErrors.notFound("Profile not found");
+      return { profile: row };
     },
   );
 };

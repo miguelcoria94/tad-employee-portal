@@ -1,6 +1,9 @@
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { getDb, schema } from "@tadhealth/db";
-import type { UpdateMyProfileInput } from "@tadhealth/shared";
+import type {
+  UpdateMyProfileInput,
+  UpdateOnboardingInput,
+} from "@tadhealth/shared";
 import { notify } from "./notifications.js";
 
 const ADMIN_EMAILS = new Set(["ben@tadhealth.com", "claire@tadhealth.com"]);
@@ -179,4 +182,24 @@ export async function updateMyProfile(
   });
 
   return { employee: updated ?? before, changes };
+}
+
+export async function updateOnboarding(
+  userId: string,
+  input: UpdateOnboardingInput,
+) {
+  const db = getDb();
+  const patch: Record<string, unknown> = { updatedAt: sql`now()` };
+  if (input.completedSteps !== undefined) {
+    patch.onboardingSteps = input.completedSteps;
+  }
+  if (input.dismissed !== undefined) {
+    patch.onboardingDismissedAt = input.dismissed ? sql`now()` : null;
+  }
+  const [row] = await db
+    .update(schema.profiles)
+    .set(patch)
+    .where(eq(schema.profiles.id, userId))
+    .returning();
+  return row ?? null;
 }

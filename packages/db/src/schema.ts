@@ -60,6 +60,13 @@ export const profiles = pgTable(
       onDelete: "set null",
     }),
     isAdmin: boolean("is_admin").notNull().default(false),
+    onboardingSteps: jsonb("onboarding_steps")
+      .$type<string[]>()
+      .notNull()
+      .default(sql`'[]'::jsonb`),
+    onboardingDismissedAt: timestamp("onboarding_dismissed_at", {
+      withTimezone: true,
+    }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

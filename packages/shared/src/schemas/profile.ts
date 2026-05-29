@@ -5,10 +5,18 @@ export const profileSchema = z.object({
   id: z.string().uuid(),
   employeeId: z.string().uuid().nullable(),
   isAdmin: z.boolean(),
+  onboardingSteps: z.array(z.string()),
+  onboardingDismissedAt: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
 export type Profile = z.infer<typeof profileSchema>;
+
+export const updateOnboardingSchema = z.object({
+  completedSteps: z.array(z.string()).optional(),
+  dismissed: z.boolean().optional(),
+});
+export type UpdateOnboardingInput = z.infer<typeof updateOnboardingSchema>;
 
 export const meResponseSchema = z.object({
   profile: profileSchema,

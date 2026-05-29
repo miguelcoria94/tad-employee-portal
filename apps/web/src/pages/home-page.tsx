@@ -4,6 +4,7 @@ import { api } from "@/lib/api";
 import { Hero } from "@/components/home/hero";
 import { DepartmentList } from "@/components/home/department-list";
 import { UpcomingWidget } from "@/components/home/upcoming-widget";
+import { OnboardingChecklist } from "@/components/home/onboarding-checklist";
 import { Testimonial } from "@/components/home/testimonial";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -16,6 +17,7 @@ export function HomePage() {
   return (
     <>
       <Hero />
+      <OnboardingChecklist />
       <UpcomingWidget />
       {isLoading ? (
         <div className="grid place-items-center py-24">
