@@ -13,3 +13,4 @@ export const supabaseAdmin = createClient(
 );
 
 export const UPLOADS_BUCKET = "updates-media";
+export const AVATARS_BUCKET = "avatars";

@@ -11,6 +11,7 @@ import { SurveysPage } from "@/pages/surveys-page";
 import { SurveyDetailPage } from "@/pages/survey-detail-page";
 import { SurveyResultsPage } from "@/pages/survey-results-page";
 import { HelpPage } from "@/pages/help-page";
+import { NotificationsPage } from "@/pages/notifications-page";
 import { MePage } from "@/pages/me-page";
 import { AdminLayout } from "@/pages/admin/admin-layout";
 import { AdminEmployeesPage } from "@/pages/admin/admin-employees-page";
@@ -48,6 +49,7 @@ export function App() {
         <Route path="/surveys/:id" element={<SurveyDetailPage />} />
         <Route path="/surveys/:id/results" element={<SurveyResultsPage />} />
         <Route path="/help" element={<HelpPage />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/me" element={<MePage />} />
         <Route
           path="/admin"

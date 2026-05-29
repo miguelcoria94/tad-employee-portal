@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Camera, CheckCircle2 } from "lucide-react";
 import type { Employee, UpdateMyProfileInput } from "@tadhealth/shared";
+import { useRef } from "react";
 import { api, ApiError } from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/auth/auth-context";
+
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
 import { Input, Textarea } from "@/components/ui/input";
@@ -104,10 +108,7 @@ export function MePage() {
             Your Profile
           </p>
           <div className="flex items-center gap-4">
-            <Avatar
-              initials={initials(e).toUpperCase()}
-              className="h-16 w-16 text-lg"
-            />
+            <AvatarUploader employee={e} onUpdated={refresh} />
             <div className="min-w-0">
               <h1 className="text-3xl font-bold tracking-tight text-brand-900">
                 {fullName(e)}
@@ -239,6 +240,78 @@ function Field({
         {label}
       </dt>
       <dd className="mt-0.5 text-sm text-brand-900">{children}</dd>
+    </div>
+  );
+}
+
+function AvatarUploader({
+  employee,
+  onUpdated,
+}: {
+  employee: Employee;
+  onUpdated: () => void;
+}) {
+  const fileInput = useRef<HTMLInputElement | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setErr(null);
+    setUploading(true);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new Error("Not signed in");
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch(`${API_URL}/api/v1/me/avatar`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error?.message ?? `Upload failed (${res.status})`);
+      }
+      onUpdated();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div className="relative">
+      <Avatar
+        initials={initials(employee).toUpperCase()}
+        src={employee.avatarUrl}
+        alt={fullName(employee)}
+        className="h-16 w-16 text-lg"
+      />
+      <button
+        onClick={() => fileInput.current?.click()}
+        disabled={uploading}
+        className="absolute -bottom-1 -right-1 grid h-7 w-7 place-items-center rounded-full border border-brand-100 bg-white text-brand-700 shadow-sm hover:bg-brand-50 disabled:opacity-60"
+        title="Upload photo"
+      >
+        {uploading ? <Spinner /> : <Camera className="h-3.5 w-3.5" />}
+      </button>
+      <input
+        ref={fileInput}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/gif"
+        className="hidden"
+        onChange={handleFile}
+      />
+      {err && (
+        <p className="absolute left-20 top-1/2 -translate-y-1/2 whitespace-nowrap text-xs text-red-600">
+          {err}
+        </p>
+      )}
     </div>
   );
 }

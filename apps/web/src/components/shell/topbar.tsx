@@ -82,7 +82,10 @@ export function Topbar() {
                 {me?.employee?.firstName ?? "Hello"}
               </p>
             </div>
-            <Avatar initials={initials.toUpperCase()} />
+            <Avatar
+              initials={initials.toUpperCase()}
+              src={me?.employee?.avatarUrl}
+            />
           </NavLink>
           <button
             onClick={async () => {

@@ -7,7 +7,12 @@ export function EmployeeCard({ employee }: { employee: Employee }) {
   return (
     <article className="group relative flex flex-col gap-4 rounded-2xl border border-brand-100 bg-white p-5 shadow-soft transition-colors hover:border-highlight-300">
       <div className="flex items-start gap-4">
-        <Avatar initials={initials(employee)} size="lg" />
+        <Avatar
+          initials={initials(employee)}
+          src={employee.avatarUrl}
+          alt={fullName(employee)}
+          size="lg"
+        />
         <div className="min-w-0 flex-1">
           <p className="truncate text-base font-semibold text-brand-900">
             {fullName(employee)}

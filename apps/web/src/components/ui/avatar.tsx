@@ -2,8 +2,10 @@ import { cn } from "@/lib/utils";
 
 type Props = {
   initials: string;
+  src?: string | null;
   size?: "sm" | "md" | "lg";
   className?: string;
+  alt?: string;
 };
 
 const sizeClasses = {
@@ -28,7 +30,26 @@ function colorFor(seed: string) {
   return palettes[Math.abs(hash) % palettes.length];
 }
 
-export function Avatar({ initials, size = "md", className }: Props) {
+export function Avatar({
+  initials,
+  src,
+  size = "md",
+  className,
+  alt,
+}: Props) {
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={alt ?? initials}
+        className={cn(
+          "inline-block shrink-0 rounded-full object-cover ring-1 ring-white",
+          sizeClasses[size].split(" ").filter((c) => !c.startsWith("text-")).join(" "),
+          className,
+        )}
+      />
+    );
+  }
   return (
     <span
       aria-hidden
