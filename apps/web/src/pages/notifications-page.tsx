@@ -30,6 +30,7 @@ const ICON_BY_KIND: Record<NotificationKind, typeof Bell> = {
   profile_update: UserCog,
   time_off_request: CalendarClock,
   time_off_decision: CheckCircle,
+  update_comment: MessageSquare,
   changelog: Bell,
 };
 
@@ -42,6 +43,7 @@ const LABEL_BY_KIND: Record<NotificationKind, string> = {
   profile_update: "Profile changes",
   time_off_request: "Time-off requests",
   time_off_decision: "Time-off decisions",
+  update_comment: "Comments",
   changelog: "Changelog",
 };
 

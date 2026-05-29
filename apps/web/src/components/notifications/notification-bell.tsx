@@ -25,6 +25,7 @@ const ICON_BY_KIND: Record<NotificationKind, typeof Bell> = {
   profile_update: UserCog,
   time_off_request: CalendarClock,
   time_off_decision: CheckCircle,
+  update_comment: MessageSquare,
   changelog: Bell,
 };
 
