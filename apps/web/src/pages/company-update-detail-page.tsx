@@ -5,6 +5,7 @@ import type { CompanyUpdate } from "@tadhealth/shared";
 import { api } from "@/lib/api";
 import { Spinner } from "@/components/ui/spinner";
 import { RichTextRenderer } from "@/components/editor/rich-text-renderer";
+import { CommentThread } from "@/components/comments/comment-thread";
 
 function formatLongDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", {
@@ -79,6 +80,8 @@ export function CompanyUpdateDetailPage() {
             (This update has no body.)
           </p>
         )}
+
+        <CommentThread updateId={u.id} />
       </article>
     </div>
   );

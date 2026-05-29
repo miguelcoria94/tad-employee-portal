@@ -172,6 +172,30 @@ export type Employee = typeof employees.$inferSelect;
 export type NewEmployee = typeof employees.$inferInsert;
 export type Profile = typeof profiles.$inferSelect;
 export type NewProfile = typeof profiles.$inferInsert;
+export const updateComments = pgTable(
+  "update_comments",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    updateId: uuid("update_id")
+      .notNull()
+      .references(() => companyUpdates.id, { onDelete: "cascade" }),
+    // References auth.users(id); kept loose since auth schema is owned by
+    // Supabase. Null when an admin deletes the author's profile.
+    authorUserId: uuid("author_user_id"),
+    authorName: text("author_name").notNull(),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    updateIdx: index("update_comments_update_idx").on(t.updateId, t.createdAt),
+  }),
+);
+
 export const timeOffRequests = pgTable(
   "time_off_requests",
   {
@@ -239,6 +263,8 @@ export type Notification = typeof notifications.$inferSelect;
 export type NewNotification = typeof notifications.$inferInsert;
 export type TimeOffRequest = typeof timeOffRequests.$inferSelect;
 export type NewTimeOffRequest = typeof timeOffRequests.$inferInsert;
+export type UpdateComment = typeof updateComments.$inferSelect;
+export type NewUpdateComment = typeof updateComments.$inferInsert;
 export type CompanyUpdate = typeof companyUpdates.$inferSelect;
 export type NewCompanyUpdate = typeof companyUpdates.$inferInsert;
 export const surveys = pgTable("surveys", {

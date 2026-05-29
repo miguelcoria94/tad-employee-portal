@@ -18,6 +18,7 @@ import { uploadRoutes } from "./routes/uploads.js";
 import { surveyRoutes } from "./routes/surveys.js";
 import { notificationRoutes } from "./routes/notifications.js";
 import { timeOffRoutes } from "./routes/time-off.js";
+import { updateCommentRoutes } from "./routes/update-comments.js";
 
 async function buildServer() {
   const app = Fastify({
@@ -72,6 +73,7 @@ async function buildServer() {
       await api.register(surveyRoutes);
       await api.register(notificationRoutes);
       await api.register(timeOffRoutes);
+      await api.register(updateCommentRoutes);
     },
     { prefix: "/api/v1" },
   );
