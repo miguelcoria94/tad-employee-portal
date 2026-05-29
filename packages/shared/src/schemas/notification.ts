@@ -7,6 +7,8 @@ export const NOTIFICATION_KINDS = [
   "new_resource",
   "survey_response",
   "profile_update",
+  "time_off_request",
+  "time_off_decision",
   "changelog",
 ] as const;
 export const notificationKindSchema = z.enum(NOTIFICATION_KINDS);

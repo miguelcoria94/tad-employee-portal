@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import {
   Bell,
   Calendar,
+  CalendarClock,
   CheckCheck,
+  CheckCircle,
   ClipboardList,
   FolderOpen,
   Megaphone,
@@ -21,6 +23,8 @@ const ICON_BY_KIND: Record<NotificationKind, typeof Bell> = {
   new_resource: FolderOpen,
   survey_response: MessageSquare,
   profile_update: UserCog,
+  time_off_request: CalendarClock,
+  time_off_decision: CheckCircle,
   changelog: Bell,
 };
 

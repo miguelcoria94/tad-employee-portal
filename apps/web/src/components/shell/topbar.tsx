@@ -11,6 +11,7 @@ const links = [
   { to: "/departments", label: "Departments" },
   { to: "/directory", label: "Team Directory" },
   { to: "/surveys", label: "Surveys" },
+  { to: "/time-off", label: "Time Off" },
   { to: "/help", label: "Help" },
 ];
 

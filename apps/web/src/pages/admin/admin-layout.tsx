@@ -5,6 +5,7 @@ import {
   ClipboardList,
   LayoutDashboard,
   Newspaper,
+  PalmtreeIcon as Palmtree,
   ShieldCheck,
   Users,
 } from "lucide-react";
@@ -17,6 +18,7 @@ const links = [
   { to: "/admin/company-updates", label: "Updates", icon: Newspaper },
   { to: "/admin/company-events", label: "Events", icon: Calendar },
   { to: "/admin/surveys", label: "Surveys", icon: ClipboardList },
+  { to: "/admin/time-off", label: "Time Off", icon: Palmtree },
 ];
 
 export function AdminLayout() {

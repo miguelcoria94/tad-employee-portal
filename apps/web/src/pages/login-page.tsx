@@ -68,6 +68,27 @@ export function LoginPage() {
     setSubmitting(false);
   }
 
+  async function handleForgotPassword() {
+    setError(null);
+    setInfo(null);
+    if (!email) {
+      setError("Enter your email first, then we'll email a reset link.");
+      return;
+    }
+    setSubmitting(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) {
+      setError(error.message);
+    } else {
+      setInfo(
+        `We sent a reset link to ${email}. Open it to set a new password.`,
+      );
+    }
+    setSubmitting(false);
+  }
+
   async function handleMagicLink() {
     setError(null);
     setInfo(null);
@@ -194,14 +215,24 @@ export function LoginPage() {
             </Button>
 
             {mode === "signin" && (
-              <button
-                type="button"
-                onClick={handleMagicLink}
-                disabled={submitting}
-                className="w-full text-center text-sm font-semibold text-brand-700 hover:text-brand-900 disabled:opacity-50"
-              >
-                Email me a sign-in link instead →
-              </button>
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={handleMagicLink}
+                  disabled={submitting}
+                  className="w-full text-center text-sm font-semibold text-brand-700 hover:text-brand-900 disabled:opacity-50"
+                >
+                  Email me a sign-in link instead →
+                </button>
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  disabled={submitting}
+                  className="w-full text-center text-xs text-brand-500 hover:text-brand-700 disabled:opacity-50"
+                >
+                  Forgot your password?
+                </button>
+              </div>
             )}
           </form>
 

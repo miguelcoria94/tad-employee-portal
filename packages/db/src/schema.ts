@@ -171,6 +171,37 @@ export type Employee = typeof employees.$inferSelect;
 export type NewEmployee = typeof employees.$inferInsert;
 export type Profile = typeof profiles.$inferSelect;
 export type NewProfile = typeof profiles.$inferInsert;
+export const timeOffRequests = pgTable(
+  "time_off_requests",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    employeeId: uuid("employee_id")
+      .notNull()
+      .references(() => employees.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(), // 'vacation' | 'sick' | 'personal' | 'other'
+    startsOn: date("starts_on").notNull(),
+    endsOn: date("ends_on").notNull(),
+    note: text("note"),
+    status: text("status").notNull().default("pending"), // 'pending' | 'approved' | 'declined' | 'cancelled'
+    decidedByEmployeeId: uuid("decided_by_employee_id").references(
+      () => employees.id,
+      { onDelete: "set null" },
+    ),
+    decidedAt: timestamp("decided_at", { withTimezone: true }),
+    decisionNote: text("decision_note"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    employeeIdx: index("time_off_employee_idx").on(t.employeeId, t.startsOn),
+    statusIdx: index("time_off_status_idx").on(t.status, t.startsOn),
+  }),
+);
+
 export const notifications = pgTable(
   "notifications",
   {
@@ -205,6 +236,8 @@ export type DepartmentResource = typeof departmentResources.$inferSelect;
 export type NewDepartmentResource = typeof departmentResources.$inferInsert;
 export type Notification = typeof notifications.$inferSelect;
 export type NewNotification = typeof notifications.$inferInsert;
+export type TimeOffRequest = typeof timeOffRequests.$inferSelect;
+export type NewTimeOffRequest = typeof timeOffRequests.$inferInsert;
 export type CompanyUpdate = typeof companyUpdates.$inferSelect;
 export type NewCompanyUpdate = typeof companyUpdates.$inferInsert;
 export const surveys = pgTable("surveys", {

@@ -1,4 +1,4 @@
-import { Mail, Phone } from "lucide-react";
+import { Mail, MapPin, Phone } from "lucide-react";
 import { initials, fullName, type Employee } from "@tadhealth/shared";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +33,12 @@ export function EmployeeCard({ employee }: { employee: Employee }) {
           <Mail className="h-4 w-4 shrink-0 text-brand-400" />
           <span className="truncate">{employee.email}</span>
         </a>
+        {employee.location && (
+          <span className="inline-flex items-center gap-2 text-brand-500">
+            <MapPin className="h-4 w-4 shrink-0 text-brand-400" />
+            {employee.location}
+          </span>
+        )}
         {employee.phone && (
           <span className="inline-flex items-center gap-2 text-brand-500">
             <Phone className="h-4 w-4 shrink-0 text-brand-400" />

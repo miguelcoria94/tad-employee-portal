@@ -6,4 +6,5 @@ export * from "./schemas/company-update.js";
 export * from "./schemas/company-event.js";
 export * from "./schemas/survey.js";
 export * from "./schemas/notification.js";
+export * from "./schemas/time-off.js";
 export * from "./schemas/error.js";

@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { LoginPage } from "@/pages/login-page";
+import { ResetPasswordPage } from "@/pages/reset-password-page";
 import { HomePage } from "@/pages/home-page";
 import { DirectoryPage } from "@/pages/directory-page";
 import { DepartmentsPage } from "@/pages/departments-page";
@@ -17,6 +18,7 @@ import { AdminDepartmentsPage } from "@/pages/admin/admin-departments-page";
 import { AdminDepartmentResourcesPage } from "@/pages/admin/admin-department-resources-page";
 import { AdminCompanyUpdatesPage } from "@/pages/admin/admin-company-updates-page";
 import { AdminCompanyEventsPage } from "@/pages/admin/admin-company-events-page";
+import { AdminTimeOffPage } from "@/pages/admin/admin-time-off-page";
 import { AdminSurveysPage } from "@/pages/admin/admin-surveys-page";
 import { AdminSurveyEditPage } from "@/pages/admin/admin-survey-edit-page";
 import { AdminOverviewPage } from "@/pages/admin/admin-overview-page";
@@ -27,6 +29,7 @@ export function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       <Route
         element={
@@ -63,6 +66,7 @@ export function App() {
           />
           <Route path="company-updates" element={<AdminCompanyUpdatesPage />} />
           <Route path="company-events" element={<AdminCompanyEventsPage />} />
+          <Route path="time-off" element={<AdminTimeOffPage />} />
           <Route path="surveys" element={<AdminSurveysPage />} />
           <Route path="surveys/new" element={<AdminSurveyEditPage />} />
           <Route path="surveys/:id" element={<AdminSurveyEditPage />} />
