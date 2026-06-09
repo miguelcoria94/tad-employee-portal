@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, Trash2, X } from "lucide-react";
+import { Camera, Pencil, Plus, Trash2, X } from "lucide-react";
 import {
   type CreateEmployeeInput,
   type Employee,
@@ -8,6 +8,7 @@ import {
   initials,
 } from "@tadhealth/shared";
 import { api, ApiError } from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 import { Card, CardBody } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input, Select, Textarea } from "@/components/ui/input";
@@ -15,9 +16,11 @@ import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
 
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001";
+
 type Editing =
   | { kind: "create"; draft: CreateEmployeeInput }
-  | { kind: "edit"; id: string; draft: CreateEmployeeInput }
+  | { kind: "edit"; id: string; avatarUrl: string | null; draft: CreateEmployeeInput }
   | null;
 
 const blankDraft: CreateEmployeeInput = {
@@ -34,6 +37,8 @@ export function AdminEmployeesPage() {
   const qc = useQueryClient();
   const [editing, setEditing] = useState<Editing>(null);
   const [search, setSearch] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement | null>(null);
 
   const { data, isLoading } = useQuery<{ employees: Employee[] }>({
     queryKey: ["employees", "all"],
@@ -75,6 +80,30 @@ export function AdminEmployeesPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["employees"] }),
   });
 
+  async function uploadAvatar(file: File) {
+    if (editing?.kind !== "edit") return;
+    setUploading(true);
+    try {
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
+      if (!token) return;
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch(`${API_URL}/api/v1/employees/${editing.id}/avatar`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      if (res.ok) {
+        const { employee } = await res.json();
+        setEditing({ ...editing, avatarUrl: employee.avatarUrl });
+        qc.invalidateQueries({ queryKey: ["employees"] });
+      }
+    } finally {
+      setUploading(false);
+    }
+  }
+
   function submit() {
     if (!editing) return;
     if (editing.kind === "create") create.mutate(editing.draft);
@@ -114,7 +143,7 @@ export function AdminEmployeesPage() {
                 key={e.id}
                 className="flex items-center gap-4 px-5 py-3.5 hover:bg-brand-50/40"
               >
-                <Avatar initials={initials(e)} />
+                <Avatar initials={initials(e)} src={e.avatarUrl} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-brand-900">
                     {fullName(e)}{" "}
@@ -135,6 +164,7 @@ export function AdminEmployeesPage() {
                       setEditing({
                         kind: "edit",
                         id: e.id,
+                        avatarUrl: e.avatarUrl,
                         draft: {
                           email: e.email,
                           firstName: e.firstName,
@@ -171,7 +201,7 @@ export function AdminEmployeesPage() {
 
       {editing && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-brand-950/40 p-4 backdrop-blur-sm">
-          <Card className="w-full max-w-lg">
+          <Card className="max-h-[90vh] w-full max-w-lg overflow-y-auto">
             <CardBody className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-base font-semibold text-brand-900">
@@ -184,6 +214,49 @@ export function AdminEmployeesPage() {
                   <X className="h-4 w-4" />
                 </button>
               </div>
+
+              {editing.kind === "edit" && (
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <Avatar
+                      initials={initials({
+                        firstName: editing.draft.firstName,
+                        lastName: editing.draft.lastName,
+                      } as Employee)}
+                      src={editing.avatarUrl}
+                      size="lg"
+                    />
+                    <button
+                      onClick={() => fileRef.current?.click()}
+                      disabled={uploading}
+                      className="absolute -bottom-1 -right-1 grid h-7 w-7 place-items-center rounded-full border border-brand-100 bg-white text-brand-700 shadow-sm hover:bg-brand-50 disabled:opacity-60"
+                      title="Upload photo"
+                    >
+                      {uploading ? (
+                        <Spinner className="h-3.5 w-3.5" />
+                      ) : (
+                        <Camera className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                    <input
+                      ref={fileRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/gif"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        e.target.value = "";
+                        if (file) uploadAvatar(file);
+                      }}
+                    />
+                  </div>
+                  <div className="text-xs text-brand-500">
+                    Click the camera icon to upload a profile photo.
+                    <br />
+                    PNG, JPEG, WebP, or GIF — max 2 MB.
+                  </div>
+                </div>
+              )}
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="First name">

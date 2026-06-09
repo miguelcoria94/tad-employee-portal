@@ -43,7 +43,7 @@ function relativeLabel(date: Date) {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-export function UpcomingWidget() {
+export function UpcomingWidget({ inline }: { inline?: boolean } = {}) {
   const { data, isLoading } = useQuery<{ employees: Employee[] }>({
     queryKey: ["employees"],
     queryFn: () => api("/api/v1/employees"),
@@ -95,8 +95,8 @@ export function UpcomingWidget() {
     return null;
   }
 
-  return (
-    <section className="mx-auto max-w-7xl px-6 py-8">
+  const content = (
+    <>
       <div className="mb-5 flex items-baseline gap-3">
         <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-500">
           Coming up
@@ -105,7 +105,7 @@ export function UpcomingWidget() {
           Birthdays & work-iversaries in the next 30 days
         </span>
       </div>
-      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <ul className={`grid gap-3 ${inline ? "grid-cols-1" : "sm:grid-cols-2 lg:grid-cols-4"}`}>
         {items.map((item, i) => {
           const Icon = item.kind === "birthday" ? Cake : PartyPopper;
           const tone =
@@ -142,6 +142,12 @@ export function UpcomingWidget() {
           );
         })}
       </ul>
-    </section>
+    </>
+  );
+
+  if (inline) return <section>{content}</section>;
+
+  return (
+    <section className="mx-auto max-w-7xl px-6 py-8">{content}</section>
   );
 }

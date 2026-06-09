@@ -18,11 +18,28 @@ const envSchema = z.object({
   LOG_LEVEL: z
     .enum(["fatal", "error", "warn", "info", "debug", "trace"])
     .default("info"),
+  // Bind address. Defaults to 0.0.0.0 for prod/containers. Set to 127.0.0.1
+  // locally to avoid Fastify enumerating network interfaces on startup (some
+  // sandboxed/macOS environments throw on os.networkInterfaces()).
+  HOST: z.string().default("0.0.0.0"),
   SUPABASE_URL: z.string().url(),
   SUPABASE_ANON_KEY: z.string().min(1),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
   DATABASE_URL: z.string().url(),
   ALLOWED_ORIGINS: z.string().default("http://localhost:5173"),
+  // Optional: enables the "Ask Tad" assistant. When unset the assistant
+  // endpoint returns a friendly "not configured" message instead of erroring.
+  OPENAI_API_KEY: z.string().optional(),
+  OPENAI_MODEL: z.string().default("gpt-4o-mini"),
+  // Optional outbound email. When EMAIL_PROVIDER is unset (or "log") emails are
+  // logged to the server console instead of being sent — the app still boots
+  // and all in-app notifications still fire. Set EMAIL_PROVIDER=resend plus
+  // RESEND_API_KEY to actually deliver mail (mirrors the optional OpenAI key).
+  EMAIL_PROVIDER: z.enum(["log", "resend"]).default("log"),
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().default("TadHealth <onboarding@resend.dev>"),
+  // Base URL used to build absolute links in emails (e.g. course links).
+  APP_BASE_URL: z.string().url().default("http://localhost:5181"),
 });
 
 const parsed = envSchema.safeParse(process.env);

@@ -46,8 +46,10 @@ export function CommentThread({ updateId }: { updateId: string }) {
 
   // Real-time: refresh when a new comment lands.
   useEffect(() => {
+    // Unique topic per effect run so StrictMode's double-mount can't hand us a
+    // channel that's already subscribed (which makes `.on(...)` throw).
     const channel = supabase
-      .channel(`update-comments:${updateId}`)
+      .channel(`update-comments:${updateId}:${crypto.randomUUID()}`)
       .on(
         "postgres_changes",
         {

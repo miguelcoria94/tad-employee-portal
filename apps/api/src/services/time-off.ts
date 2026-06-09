@@ -4,8 +4,11 @@ import { getDb, schema } from "@tadhealth/db";
 import type {
   CreateTimeOffRequestInput,
   DecideTimeOffRequestInput,
+  SetBalancesInput,
+  TimeOffKind,
   TimeOffStatus,
 } from "@tadhealth/shared";
+import { countDays } from "@tadhealth/shared";
 import { notify } from "./notifications.js";
 
 const decidedBy = alias(schema.employees, "decided_by");
@@ -99,6 +102,33 @@ export async function createRequest(
     });
   }
 
+  const days = countDays(input.startsOn, input.endsOn);
+  const year = new Date(input.startsOn + "T00:00:00").getFullYear();
+
+  const [balance] = await db
+    .select()
+    .from(schema.timeOffBalances)
+    .where(
+      and(
+        eq(schema.timeOffBalances.employeeId, employeeId),
+        eq(schema.timeOffBalances.kind, input.kind),
+        eq(schema.timeOffBalances.year, year),
+      ),
+    )
+    .limit(1);
+
+  if (balance) {
+    const remaining = balance.totalDays - balance.usedDays;
+    if (days > remaining) {
+      throw Object.assign(
+        new Error(
+          `Insufficient ${input.kind} balance: ${days} day(s) requested but only ${remaining} remaining`,
+        ),
+        { statusCode: 400 },
+      );
+    }
+  }
+
   const [inserted] = await db
     .insert(schema.timeOffRequests)
     .values({
@@ -188,6 +218,21 @@ export async function decideRequest(
     .returning();
   if (!row) return null;
 
+  const days = countDays(before.startsOn, before.endsOn);
+  const year = new Date(before.startsOn + "T00:00:00").getFullYear();
+  if (input.status === "approved") {
+    await db
+      .update(schema.timeOffBalances)
+      .set({ usedDays: sql`used_days + ${days}`, updatedAt: sql`now()` })
+      .where(
+        and(
+          eq(schema.timeOffBalances.employeeId, before.employeeId),
+          eq(schema.timeOffBalances.kind, before.kind),
+          eq(schema.timeOffBalances.year, year),
+        ),
+      );
+  }
+
   // Notify the requester (find the auth user whose profile.employee_id matches)
   const [requesterProfile] = await db
     .select({ id: schema.profiles.id })
@@ -209,4 +254,79 @@ export async function decideRequest(
   }
 
   return row;
+}
+
+export async function getMyBalances(userId: string) {
+  const db = getDb();
+  const employeeId = await getEmployeeIdForUser(userId);
+  if (!employeeId) return [];
+  const year = new Date().getFullYear();
+  return db
+    .select()
+    .from(schema.timeOffBalances)
+    .where(
+      and(
+        eq(schema.timeOffBalances.employeeId, employeeId),
+        eq(schema.timeOffBalances.year, year),
+      ),
+    );
+}
+
+export async function getAllBalances(year: number) {
+  const db = getDb();
+  return db
+    .select({
+      id: schema.timeOffBalances.id,
+      employeeId: schema.timeOffBalances.employeeId,
+      kind: schema.timeOffBalances.kind,
+      totalDays: schema.timeOffBalances.totalDays,
+      usedDays: schema.timeOffBalances.usedDays,
+      year: schema.timeOffBalances.year,
+      createdAt: schema.timeOffBalances.createdAt,
+      updatedAt: schema.timeOffBalances.updatedAt,
+      employeeFirstName: schema.employees.firstName,
+      employeeLastName: schema.employees.lastName,
+    })
+    .from(schema.timeOffBalances)
+    .innerJoin(
+      schema.employees,
+      eq(schema.timeOffBalances.employeeId, schema.employees.id),
+    )
+    .where(eq(schema.timeOffBalances.year, year));
+}
+
+export async function bulkSetBalance(input: SetBalancesInput) {
+  const db = getDb();
+  let ids = input.employeeIds;
+  if (!ids || ids.length === 0) {
+    const rows = await db
+      .select({ id: schema.employees.id })
+      .from(schema.employees)
+      .where(eq(schema.employees.isActive, true));
+    ids = rows.map((r) => r.id);
+  }
+
+  for (const employeeId of ids) {
+    await db
+      .insert(schema.timeOffBalances)
+      .values({
+        employeeId,
+        kind: input.kind,
+        totalDays: input.totalDays,
+        year: input.year,
+      })
+      .onConflictDoUpdate({
+        target: [
+          schema.timeOffBalances.employeeId,
+          schema.timeOffBalances.kind,
+          schema.timeOffBalances.year,
+        ],
+        set: {
+          totalDays: input.totalDays,
+          updatedAt: sql`now()`,
+        },
+      });
+  }
+
+  return { updated: ids.length };
 }

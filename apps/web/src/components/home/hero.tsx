@@ -1,46 +1,35 @@
-import { ArrowRight, Calendar } from "lucide-react";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/auth/auth-context";
-import { formatDateLong } from "@/lib/utils";
+
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 12) return "Good Morning";
+  if (h < 17) return "Good Afternoon";
+  return "Good Evening";
+}
+
+function todayString() {
+  return new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
 export function Hero() {
   const { me } = useAuth();
   const firstName = me?.employee?.firstName;
 
   return (
-    <section className="bg-brand-mesh relative overflow-hidden border-b border-brand-100">
-      <div className="mx-auto max-w-7xl px-6 py-16 md:py-24">
-        <div className="flex flex-col gap-6">
-          <div className="flex items-center gap-3 text-sm text-brand-600">
-            <span className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-white/80 px-3 py-1 font-medium shadow-sm backdrop-blur">
-              <Calendar className="h-3.5 w-3.5 text-highlight-600" />
-              {formatDateLong()}
-            </span>
-            <span className="hidden text-xs uppercase tracking-[0.2em] text-brand-400 md:inline">
-              · Internal Use Only
-            </span>
-          </div>
-
-          <h1 className="max-w-3xl text-4xl font-extrabold tracking-tight text-brand-900 md:text-6xl">
-            {firstName ? `Welcome back, ${firstName}.` : "Empowering those who care."}
-          </h1>
-
-          <p className="max-w-2xl text-lg text-brand-600 md:text-xl">
-            Your command center. Access the tools, resources, and updates you
-            need to support our mission of accessible mental health care in
-            schools.
-          </p>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <Link to="/company-updates">
-              <Button size="lg">
-                View Company Updates
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-        </div>
+    <section className="border-b border-brand-100 bg-gradient-to-r from-brand-900 to-brand-800">
+      <div className="mx-auto max-w-7xl px-6 py-8 md:py-10">
+        <h1 className="text-2xl font-bold tracking-tight text-white md:text-3xl">
+          {greeting()}
+          {firstName ? `, ${firstName}` : ""}.
+        </h1>
+        <p className="mt-1 text-sm text-brand-200 md:text-base">
+          It's {todayString()}
+        </p>
       </div>
     </section>
   );

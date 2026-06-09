@@ -5,9 +5,11 @@ import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import type {
   CreateTimeOffRequestInput,
   TimeOffKind,
+  TimeOffBalance,
   TimeOffRequestRow,
   TimeOffStatus,
 } from "@tadhealth/shared";
+import { countDays } from "@tadhealth/shared";
 import { api, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
@@ -53,6 +55,35 @@ const blank: CreateTimeOffRequestInput = {
   note: "",
 };
 
+const KIND_COLOR: Record<TimeOffKind, string> = {
+  vacation: "bg-highlight-400",
+  sick: "bg-accent-400",
+  personal: "bg-brand-400",
+  other: "bg-brand-200",
+};
+
+function BalanceBar({ kind, bal }: { kind: TimeOffKind; bal: TimeOffBalance }) {
+  const pct = bal.totalDays > 0 ? Math.min(100, (bal.usedDays / bal.totalDays) * 100) : 0;
+  const remaining = bal.totalDays - bal.usedDays;
+  return (
+    <div className="flex items-center gap-4">
+      <span className="w-20 text-xs font-semibold text-brand-700">{KIND_LABEL[kind]}</span>
+      <div className="h-2 flex-1 overflow-hidden rounded-full bg-brand-100">
+        <div
+          className={cn("h-full rounded-full transition-all", KIND_COLOR[kind])}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <span className="w-24 text-right text-xs text-brand-600">
+        {bal.usedDays} / {bal.totalDays} used
+      </span>
+      <Badge variant={remaining > 0 ? "highlight" : "neutral"} className="w-16 justify-center">
+        {remaining}d left
+      </Badge>
+    </div>
+  );
+}
+
 export function TimeOffPage() {
   const qc = useQueryClient();
   const [draft, setDraft] = useState<CreateTimeOffRequestInput>(blank);
@@ -62,6 +93,15 @@ export function TimeOffPage() {
     queryKey: ["time-off", "mine"],
     queryFn: () => api("/api/v1/time-off"),
   });
+
+  const balancesQ = useQuery<{ balances: TimeOffBalance[] }>({
+    queryKey: ["time-off", "balances"],
+    queryFn: () => api("/api/v1/time-off/balances"),
+  });
+
+  const balanceMap = new Map(
+    (balancesQ.data?.balances ?? []).map((b) => [b.kind, b]),
+  );
 
   const create = useMutation({
     mutationFn: (input: CreateTimeOffRequestInput) =>
@@ -84,10 +124,25 @@ export function TimeOffPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["time-off"] }),
   });
 
+  const requestedDays =
+    draft.startsOn && draft.endsOn && draft.endsOn >= draft.startsOn
+      ? countDays(draft.startsOn, draft.endsOn)
+      : 0;
+
+  const currentBal = balanceMap.get(draft.kind);
+  const remaining = currentBal ? currentBal.totalDays - currentBal.usedDays : null;
+  const overBudget = remaining !== null && requestedDays > 0 && requestedDays > remaining;
+
   function submit() {
     setError(null);
     if (!draft.startsOn || !draft.endsOn) {
       setError("Pick a start and end date.");
+      return;
+    }
+    if (overBudget) {
+      setError(
+        `Insufficient ${draft.kind} balance: ${requestedDays} day(s) requested but only ${remaining} remaining.`,
+      );
       return;
     }
     create.mutate({
@@ -99,6 +154,7 @@ export function TimeOffPage() {
   }
 
   const requests = data?.requests ?? [];
+  const balances = balancesQ.data?.balances ?? [];
 
   return (
     <div className="bg-brand-mesh">
@@ -119,12 +175,25 @@ export function TimeOffPage() {
             Time Off
           </h1>
           <p className="mt-3 max-w-2xl text-base text-brand-600">
-            Request time off for vacation, sick days, or anything else. Claire
-            and Ben get notified and will approve or decline.
+            Request time off for vacation, sick days, or anything else. Admins
+            get notified and will approve or decline.
           </p>
         </header>
 
-        <Card className="mt-8">
+        {balances.length > 0 && (
+          <Card className="mt-8">
+            <CardBody className="space-y-3">
+              <h2 className="text-sm font-semibold text-brand-900">
+                Your {new Date().getFullYear()} balances
+              </h2>
+              {balances.map((b) => (
+                <BalanceBar key={b.kind} kind={b.kind as TimeOffKind} bal={b} />
+              ))}
+            </CardBody>
+          </Card>
+        )}
+
+        <Card className="mt-6">
           <CardBody className="space-y-4">
             <h2 className="text-base font-semibold text-brand-900">
               New request
@@ -166,13 +235,21 @@ export function TimeOffPage() {
                 />
               </label>
             </div>
+
+            {requestedDays > 0 && (
+              <p className={cn("text-xs font-medium", overBudget ? "text-red-600" : "text-brand-600")}>
+                {requestedDays} day(s) requested
+                {remaining !== null && ` — ${remaining} ${draft.kind} day(s) remaining`}
+              </p>
+            )}
+
             <label className="flex flex-col gap-1.5">
               <span className="text-xs font-medium text-brand-700">
                 Note (optional)
               </span>
               <Textarea
                 rows={3}
-                placeholder="Anything Claire or Ben should know — coverage plan, time-zone offset, etc."
+                placeholder="Anything the team should know — coverage plan, time-zone offset, etc."
                 value={draft.note ?? ""}
                 onChange={(e) => setDraft({ ...draft, note: e.target.value })}
               />
@@ -183,7 +260,7 @@ export function TimeOffPage() {
               </div>
             )}
             <div className="flex justify-end">
-              <Button onClick={submit} disabled={create.isPending}>
+              <Button onClick={submit} disabled={create.isPending || overBudget}>
                 {create.isPending ? (
                   <Spinner className="border-white/40 border-t-white" />
                 ) : (
@@ -271,7 +348,4 @@ export function TimeOffPage() {
   );
 }
 
-// keep this so admin page can import the same maps later if needed
 export { KIND_LABEL, STATUS_STYLE, formatRange };
-// silence unused Badge import
-void Badge;

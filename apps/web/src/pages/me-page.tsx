@@ -1,8 +1,23 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Camera, CheckCircle2 } from "lucide-react";
-import type { Employee, UpdateMyProfileInput } from "@tadhealth/shared";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  ArrowLeft,
+  Camera,
+  CheckCircle2,
+  Plus,
+  Pencil,
+  Trash2,
+  MessageSquare,
+  GraduationCap,
+  MessageCircle,
+  Star,
+} from "lucide-react";
+import type {
+  Employee,
+  UpdateMyProfileInput,
+  EmergencyContactRow,
+} from "@tadhealth/shared";
 import { useRef } from "react";
 import { api, ApiError } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
@@ -11,7 +26,7 @@ import { useAuth } from "@/auth/auth-context";
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
-import { Input, Textarea } from "@/components/ui/input";
+import { Input, Textarea, Select } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +50,31 @@ function draftFromEmployee(e: Employee | null | undefined): Draft {
   };
 }
 
+const RELATIONSHIP_OPTIONS = [
+  "Spouse",
+  "Parent",
+  "Sibling",
+  "Child",
+  "Friend",
+  "Other",
+] as const;
+
+type ContactDraft = {
+  name: string;
+  relationship: string;
+  phone: string;
+  email: string;
+  isPrimary: boolean;
+};
+
+const emptyContactDraft: ContactDraft = {
+  name: "",
+  relationship: "Spouse",
+  phone: "",
+  email: "",
+  isPrimary: false,
+};
+
 export function MePage() {
   const { me, loading, refresh } = useAuth();
   const qc = useQueryClient();
@@ -42,7 +82,6 @@ export function MePage() {
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Sync local draft when /me data first lands or refreshes.
   useEffect(() => {
     if (me?.employee) setDraft(draftFromEmployee(me.employee));
   }, [me?.employee?.id, me?.employee?.updatedAt]);
@@ -56,7 +95,6 @@ export function MePage() {
     onSuccess: () => {
       setSavedAt(Date.now());
       setError(null);
-      // Refresh /me + the directory in case it's open in another tab.
       qc.invalidateQueries({ queryKey: ["employees"] });
       refresh();
     },
@@ -263,8 +301,361 @@ export function MePage() {
             </div>
           </CardBody>
         </Card>
+
+        <EmergencyContactsSection />
+
+        <Card className="mt-6">
+          <CardBody className="space-y-3">
+            <h2 className="text-base font-semibold text-brand-900">
+              Quick links
+            </h2>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <QuickLinkCard
+                to="/feedback"
+                icon={<MessageSquare className="h-5 w-5 text-highlight-600" />}
+                title="My Feedback"
+                subtitle="View & give feedback"
+              />
+              <QuickLinkCard
+                to="/training"
+                icon={<GraduationCap className="h-5 w-5 text-highlight-600" />}
+                title="My Training"
+                subtitle="Courses & progress"
+              />
+              <QuickLinkCard
+                to="/dms"
+                icon={<MessageCircle className="h-5 w-5 text-highlight-600" />}
+                title="Messages"
+                subtitle="Direct messages"
+              />
+            </div>
+          </CardBody>
+        </Card>
       </div>
     </div>
+  );
+}
+
+function QuickLinkCard({
+  to,
+  icon,
+  title,
+  subtitle,
+}: {
+  to: string;
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+}) {
+  return (
+    <Link
+      to={to}
+      className="flex items-center gap-3 rounded-xl border border-brand-100 bg-white p-3 shadow-sm transition-all hover:border-highlight-200 hover:shadow-md"
+    >
+      {icon}
+      <div className="min-w-0">
+        <p className="text-sm font-semibold text-brand-900">{title}</p>
+        <p className="text-xs text-brand-500">{subtitle}</p>
+      </div>
+    </Link>
+  );
+}
+
+function EmergencyContactsSection() {
+  const qc = useQueryClient();
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [contactDraft, setContactDraft] = useState<ContactDraft>(emptyContactDraft);
+  const [contactError, setContactError] = useState<string | null>(null);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["emergency-contacts"],
+    queryFn: () =>
+      api<{ contacts: EmergencyContactRow[] }>("/api/v1/me/emergency-contacts"),
+  });
+
+  const contacts = data?.contacts ?? [];
+
+  const addMutation = useMutation({
+    mutationFn: (input: ContactDraft) =>
+      api<{ contact: EmergencyContactRow }>("/api/v1/me/emergency-contacts", {
+        method: "POST",
+        body: JSON.stringify({
+          name: input.name,
+          relationship: input.relationship,
+          phone: input.phone,
+          email: input.email || null,
+          isPrimary: input.isPrimary,
+        }),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["emergency-contacts"] });
+      resetForm();
+    },
+    onError: (err) => {
+      setContactError(
+        err instanceof ApiError ? err.message : (err as Error).message,
+      );
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, input }: { id: string; input: ContactDraft }) =>
+      api<{ contact: EmergencyContactRow }>(
+        `/api/v1/me/emergency-contacts/${id}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            name: input.name,
+            relationship: input.relationship,
+            phone: input.phone,
+            email: input.email || null,
+            isPrimary: input.isPrimary,
+          }),
+        },
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["emergency-contacts"] });
+      resetForm();
+    },
+    onError: (err) => {
+      setContactError(
+        err instanceof ApiError ? err.message : (err as Error).message,
+      );
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) =>
+      api(`/api/v1/me/emergency-contacts/${id}`, { method: "DELETE" }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["emergency-contacts"] });
+    },
+  });
+
+  function resetForm() {
+    setShowForm(false);
+    setEditingId(null);
+    setContactDraft(emptyContactDraft);
+    setContactError(null);
+  }
+
+  function startEdit(c: EmergencyContactRow) {
+    setEditingId(c.id);
+    setContactDraft({
+      name: c.name,
+      relationship: c.relationship,
+      phone: c.phone,
+      email: c.email ?? "",
+      isPrimary: c.isPrimary,
+    });
+    setShowForm(true);
+  }
+
+  function handleSubmit() {
+    if (!contactDraft.name.trim() || !contactDraft.phone.trim()) {
+      setContactError("Name and phone are required.");
+      return;
+    }
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, input: contactDraft });
+    } else {
+      addMutation.mutate(contactDraft);
+    }
+  }
+
+  const isSaving = addMutation.isPending || updateMutation.isPending;
+
+  return (
+    <Card className="mt-6">
+      <CardBody className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold text-brand-900">
+            Emergency Contacts
+          </h2>
+          {!showForm && (
+            <Button
+              onClick={() => {
+                setEditingId(null);
+                setContactDraft(emptyContactDraft);
+                setContactError(null);
+                setShowForm(true);
+              }}
+            >
+              <Plus className="h-4 w-4" />
+              Add contact
+            </Button>
+          )}
+        </div>
+
+        {isLoading && (
+          <div className="flex justify-center py-4">
+            <Spinner />
+          </div>
+        )}
+
+        {!isLoading && contacts.length === 0 && !showForm && (
+          <p className="text-sm text-brand-500">
+            No emergency contacts added yet. Add one so we can reach someone if
+            needed.
+          </p>
+        )}
+
+        {contacts.length > 0 && (
+          <div className="space-y-3">
+            {contacts.map((c) => (
+              <div
+                key={c.id}
+                className="flex items-start justify-between rounded-lg border border-brand-100 bg-brand-50/50 p-3"
+              >
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-brand-900">
+                      {c.name}
+                    </span>
+                    {c.isPrimary && (
+                      <Badge variant="highlight">
+                        <Star className="mr-0.5 h-3 w-3" />
+                        Primary
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="mt-0.5 text-xs text-brand-600">
+                    {c.relationship}
+                  </p>
+                  <p className="mt-1 text-xs text-brand-600">{c.phone}</p>
+                  {c.email && (
+                    <p className="text-xs text-brand-500">{c.email}</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => startEdit(c)}
+                    className="rounded-md p-1.5 text-brand-500 hover:bg-brand-100 hover:text-brand-800"
+                    title="Edit"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    onClick={() => deleteMutation.mutate(c.id)}
+                    disabled={deleteMutation.isPending}
+                    className="rounded-md p-1.5 text-brand-500 hover:bg-red-50 hover:text-red-600"
+                    title="Delete"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {showForm && (
+          <div className="rounded-xl border border-highlight-200 bg-highlight-50/30 p-4 space-y-3">
+            <h3 className="text-sm font-semibold text-brand-900">
+              {editingId ? "Edit contact" : "New emergency contact"}
+            </h3>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="flex flex-col gap-1">
+                <span className="text-xs font-medium text-brand-700">Name</span>
+                <Input
+                  placeholder="Full name"
+                  value={contactDraft.name}
+                  onChange={(e) =>
+                    setContactDraft({ ...contactDraft, name: e.target.value })
+                  }
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs font-medium text-brand-700">
+                  Relationship
+                </span>
+                <Select
+                  value={contactDraft.relationship}
+                  onChange={(e) =>
+                    setContactDraft({
+                      ...contactDraft,
+                      relationship: e.target.value,
+                    })
+                  }
+                >
+                  {RELATIONSHIP_OPTIONS.map((r) => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  ))}
+                </Select>
+              </label>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="flex flex-col gap-1">
+                <span className="text-xs font-medium text-brand-700">Phone</span>
+                <Input
+                  placeholder="(555) 123-4567"
+                  value={contactDraft.phone}
+                  onChange={(e) =>
+                    setContactDraft({ ...contactDraft, phone: e.target.value })
+                  }
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs font-medium text-brand-700">
+                  Email (optional)
+                </span>
+                <Input
+                  type="email"
+                  placeholder="email@example.com"
+                  value={contactDraft.email}
+                  onChange={(e) =>
+                    setContactDraft({ ...contactDraft, email: e.target.value })
+                  }
+                />
+              </label>
+            </div>
+
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={contactDraft.isPrimary}
+                onChange={(e) =>
+                  setContactDraft({
+                    ...contactDraft,
+                    isPrimary: e.target.checked,
+                  })
+                }
+                className="h-4 w-4 rounded border-brand-300 text-highlight-600 focus:ring-highlight-500"
+              />
+              <span className="text-xs font-medium text-brand-700">
+                Primary contact
+              </span>
+            </label>
+
+            {contactError && (
+              <div className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {contactError}
+              </div>
+            )}
+
+            <div className="flex items-center gap-2 pt-1">
+              <Button onClick={handleSubmit} disabled={isSaving}>
+                {isSaving && (
+                  <Spinner className="border-white/40 border-t-white" />
+                )}
+                {editingId ? "Update" : "Save"}
+              </Button>
+              <Button
+                onClick={resetForm}
+                className="bg-brand-100 text-brand-700 hover:bg-brand-200"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardBody>
+    </Card>
   );
 }
 

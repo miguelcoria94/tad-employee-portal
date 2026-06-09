@@ -1,22 +1,31 @@
 import "./load-env.js";
 import { drizzle } from "drizzle-orm/postgres-js";
-import { eq } from "drizzle-orm";
+import { and, eq, sql as drizzleSql } from "drizzle-orm";
 import postgres from "postgres";
 import {
   companyEvents,
   departmentResources,
   departments,
   employees,
+  internalJobs,
   surveyAnswers,
   surveyQuestions,
   surveyResponses,
   surveys,
+  timeOffBalances,
+  timeOffRequests,
 } from "./schema.js";
 import type {
   NewCompanyEvent,
   NewDepartment,
   NewEmployee,
+  NewInternalJob,
 } from "./schema.js";
+import { companyResourceSeeds } from "./seed-handbook.js";
+
+// Sentinel department name for company-wide resources (mirrors
+// COMPANY_RESOURCE_SCOPE in @tadhealth/shared).
+const COMPANY_SCOPE = "Company";
 
 type QType =
   | "short_text"
@@ -239,6 +248,70 @@ async function seedEventsIfEmpty() {
   }
   console.log(`Seeding ${seedEventsList.length} company events…`);
   await db.insert(companyEvents).values(seedEventsList);
+}
+
+const seedInternalJobsList: NewInternalJob[] = [
+  {
+    title: "Senior Software Engineer",
+    department: "Product Development",
+    location: "Newport Beach, CA (Hybrid)",
+    employmentType: "full_time",
+    description:
+      "<p>We're looking for a senior engineer to help build the next generation of TadHealth's care-coordination platform. You'll work across our React/TypeScript frontend, Node API, and Postgres stack — shipping features that directly impact schools and clinicians.</p><p><strong>What you'll do</strong></p><ul><li>Design and ship product features end-to-end</li><li>Partner with product and clinical teams on requirements</li><li>Mentor engineers and raise the bar on code quality</li><li>Help shape our architecture as we scale</li></ul>",
+    requirements:
+      "<ul><li>5+ years building production web applications</li><li>Strong TypeScript and React experience</li><li>Comfortable with SQL and API design</li><li>Bonus: healthcare or EdTech background</li></ul>",
+    publishedAt: new Date("2026-05-01T12:00:00Z"),
+    closesAt: new Date("2026-07-31T23:59:59Z"),
+  },
+  {
+    title: "Customer Success Manager",
+    department: "Customer Experience",
+    location: "San Diego, CA",
+    employmentType: "full_time",
+    description:
+      "<p>Own the post-sale relationship for a portfolio of district partners. You'll be their trusted advisor — driving adoption, surfacing product feedback, and helping schools get the most out of TadHealth.</p><p><strong>What you'll do</strong></p><ul><li>Lead QBRs and executive check-ins</li><li>Build success plans tied to district outcomes</li><li>Coordinate with implementation and support</li><li>Identify expansion and renewal opportunities</li></ul>",
+    requirements:
+      "<ul><li>3+ years in customer success or account management</li><li>Experience with K-12 or healthcare clients preferred</li><li>Strong presentation and relationship skills</li><li>Comfortable navigating complex stakeholder maps</li></ul>",
+    publishedAt: new Date("2026-05-08T12:00:00Z"),
+    closesAt: new Date("2026-06-30T23:59:59Z"),
+  },
+  {
+    title: "Clinical Implementation Specialist",
+    department: "Clinical",
+    location: "Remote (US)",
+    employmentType: "full_time",
+    description:
+      "<p>Guide new district partners through clinical workflow setup — from EHR integrations to care-team configuration. You'll translate clinical requirements into a smooth go-live.</p><p><strong>What you'll do</strong></p><ul><li>Run discovery and configuration workshops</li><li>Train school-based clinicians and counselors</li><li>Document workflows and hand off to CS</li><li>Partner with product on implementation feedback</li></ul>",
+    requirements:
+      "<ul><li>Licensed clinician (LCSW, LPC, RN, or equivalent) or 4+ years in clinical ops</li><li>Experience implementing software in school or healthcare settings</li><li>Excellent written communication</li><li>Willingness to travel ~25%</li></ul>",
+    publishedAt: new Date("2026-05-15T12:00:00Z"),
+    closesAt: null,
+  },
+  {
+    title: "Marketing Coordinator",
+    department: "Marketing",
+    location: "Newport Beach, CA",
+    employmentType: "full_time",
+    description:
+      "<p>Support campaigns, events, and content that tell the TadHealth story. You'll work closely with leadership and CS on materials for conferences, webinars, and partner outreach.</p><p><strong>What you'll do</strong></p><ul><li>Coordinate event logistics and follow-up</li><li>Draft blog posts, one-pagers, and email copy</li><li>Maintain brand assets and the content calendar</li><li>Track campaign performance and report insights</li></ul>",
+    requirements:
+      "<ul><li>1–3 years in marketing or communications</li><li>Strong writing and project management skills</li><li>Experience with Canva, HubSpot, or similar tools</li><li>Interest in mental health or EdTech mission</li></ul>",
+    publishedAt: new Date("2026-05-20T12:00:00Z"),
+    closesAt: new Date("2026-08-15T23:59:59Z"),
+  },
+];
+
+async function seedInternalJobsIfEmpty() {
+  const existing = await db
+    .select({ id: internalJobs.id })
+    .from(internalJobs)
+    .limit(1);
+  if (existing.length > 0) {
+    console.log("Skipping internal jobs — already seeded.");
+    return;
+  }
+  console.log(`Seeding ${seedInternalJobsList.length} internal job postings…`);
+  await db.insert(internalJobs).values(seedInternalJobsList);
 }
 
 const pulseResponses = [
@@ -933,6 +1006,337 @@ async function seedDepartmentResources() {
   }
 }
 
+// Idempotent: upsert company-wide handbook/benefits/policy documents keyed on
+// (department_name = "Company", title). Re-running refreshes content so edits
+// to seed-handbook.ts propagate.
+async function seedCompanyResources() {
+  console.log(`Seeding ${companyResourceSeeds.length} Company resources…`);
+  for (let i = 0; i < companyResourceSeeds.length; i++) {
+    const r = companyResourceSeeds[i]!;
+    const content = r.content.trim();
+    const [existing] = await db
+      .select({ id: departmentResources.id })
+      .from(departmentResources)
+      .where(
+        and(
+          eq(departmentResources.departmentName, COMPANY_SCOPE),
+          eq(departmentResources.title, r.title),
+        ),
+      )
+      .limit(1);
+    if (existing) {
+      await db
+        .update(departmentResources)
+        .set({
+          kind: "document",
+          content,
+          category: r.category,
+          url: null,
+          sortOrder: i,
+          updatedAt: new Date(),
+        })
+        .where(eq(departmentResources.id, existing.id));
+    } else {
+      await db.insert(departmentResources).values({
+        departmentName: COMPANY_SCOPE,
+        kind: "document",
+        title: r.title,
+        url: null,
+        content,
+        linkLabel: "Link",
+        category: r.category,
+        sortOrder: i,
+      });
+    }
+  }
+}
+
+type SeedTimeOff = {
+  employeeEmail: string;
+  kind: string;
+  startsOn: string;
+  endsOn: string;
+  note: string | null;
+  status: string;
+  decidedByEmail?: string;
+  decidedAt?: Date;
+  decisionNote?: string | null;
+  createdAt: Date;
+};
+
+const seedTimeOffList: SeedTimeOff[] = [
+  // ── Approved (past) ────────────────────────────────────────────
+  {
+    employeeEmail: "nick@tadhealth.com",
+    kind: "vacation",
+    startsOn: "2026-04-21",
+    endsOn: "2026-04-25",
+    note: "Family trip to Hawaii — Sandi covering my accounts.",
+    status: "approved",
+    decidedByEmail: "claire@tadhealth.com",
+    decidedAt: new Date("2026-04-10T14:30:00Z"),
+    decisionNote: "Enjoy! Coverage confirmed.",
+    createdAt: new Date("2026-04-08T09:00:00Z"),
+  },
+  {
+    employeeEmail: "brian@tadhealth.com",
+    kind: "personal",
+    startsOn: "2026-05-02",
+    endsOn: "2026-05-02",
+    note: "Moving day — need the full day off.",
+    status: "approved",
+    decidedByEmail: "haley@tadhealth.com",
+    decidedAt: new Date("2026-04-28T11:00:00Z"),
+    decisionNote: null,
+    createdAt: new Date("2026-04-25T16:00:00Z"),
+  },
+  {
+    employeeEmail: "jade@tadhealth.com",
+    kind: "sick",
+    startsOn: "2026-05-12",
+    endsOn: "2026-05-13",
+    note: "Not feeling well, taking a couple days to rest.",
+    status: "approved",
+    decidedByEmail: "claire@tadhealth.com",
+    decidedAt: new Date("2026-05-12T08:15:00Z"),
+    decisionNote: "Feel better!",
+    createdAt: new Date("2026-05-12T07:45:00Z"),
+  },
+  {
+    employeeEmail: "haley@tadhealth.com",
+    kind: "vacation",
+    startsOn: "2026-05-19",
+    endsOn: "2026-05-23",
+    note: "Long weekend getaway — extending through Friday.",
+    status: "approved",
+    decidedByEmail: "ben@tadhealth.com",
+    decidedAt: new Date("2026-05-06T10:00:00Z"),
+    decisionNote: null,
+    createdAt: new Date("2026-05-05T11:30:00Z"),
+  },
+  {
+    employeeEmail: "alyssa@tadhealth.com",
+    kind: "vacation",
+    startsOn: "2026-05-26",
+    endsOn: "2026-05-30",
+    note: "Visiting family back east for Memorial Day week.",
+    status: "approved",
+    decidedByEmail: "claire@tadhealth.com",
+    decidedAt: new Date("2026-05-14T09:20:00Z"),
+    decisionNote: "Approved — have a great trip!",
+    createdAt: new Date("2026-05-12T14:00:00Z"),
+  },
+  {
+    employeeEmail: "ben@tadhealth.com",
+    kind: "other",
+    startsOn: "2026-04-07",
+    endsOn: "2026-04-07",
+    note: "Jury duty — got the summons last week.",
+    status: "approved",
+    decidedByEmail: "claire@tadhealth.com",
+    decidedAt: new Date("2026-03-30T09:00:00Z"),
+    decisionNote: "Noted — good luck!",
+    createdAt: new Date("2026-03-28T14:00:00Z"),
+  },
+  {
+    employeeEmail: "zoltan@tadhealth.com",
+    kind: "vacation",
+    startsOn: "2026-04-14",
+    endsOn: "2026-04-18",
+    note: "Visiting family in Budapest — back Monday the 21st.",
+    status: "approved",
+    decidedByEmail: "ben@tadhealth.com",
+    decidedAt: new Date("2026-04-02T09:00:00Z"),
+    decisionNote: "Safe travels!",
+    createdAt: new Date("2026-03-31T10:00:00Z"),
+  },
+
+  // ── Declined ───────────────────────────────────────────────────
+  {
+    employeeEmail: "scott@tadhealth.com",
+    kind: "vacation",
+    startsOn: "2026-06-02",
+    endsOn: "2026-06-06",
+    note: "Want to take a week off before Q3 ramp-up.",
+    status: "declined",
+    decidedByEmail: "haley@tadhealth.com",
+    decidedAt: new Date("2026-05-20T15:00:00Z"),
+    decisionNote: "Conflicts with the annual sales kickoff — can you shift to the following week?",
+    createdAt: new Date("2026-05-18T10:00:00Z"),
+  },
+
+  // ── Pending (waiting on admin) ─────────────────────────────────
+  {
+    employeeEmail: "camille@tadhealth.com",
+    kind: "vacation",
+    startsOn: "2026-06-23",
+    endsOn: "2026-06-27",
+    note: "Summer vacation — heading to Yosemite.",
+    status: "pending",
+    createdAt: new Date("2026-06-01T09:00:00Z"),
+  },
+  {
+    employeeEmail: "mario@tadhealth.com",
+    kind: "personal",
+    startsOn: "2026-06-16",
+    endsOn: "2026-06-16",
+    note: "Daughter's graduation ceremony.",
+    status: "pending",
+    createdAt: new Date("2026-06-02T08:00:00Z"),
+  },
+  {
+    employeeEmail: "megan@tadhealth.com",
+    kind: "sick",
+    startsOn: "2026-06-04",
+    endsOn: "2026-06-04",
+    note: "Doctor's appointment — need the morning, taking the full day.",
+    status: "pending",
+    createdAt: new Date("2026-06-03T20:00:00Z"),
+  },
+  {
+    employeeEmail: "tiffany@tadhealth.com",
+    kind: "vacation",
+    startsOn: "2026-07-07",
+    endsOn: "2026-07-11",
+    note: "4th of July extended — taking the full week.",
+    status: "pending",
+    createdAt: new Date("2026-06-03T14:00:00Z"),
+  },
+
+  // ── Cancelled ──────────────────────────────────────────────────
+  {
+    employeeEmail: "gav@tadhealth.com",
+    kind: "vacation",
+    startsOn: "2026-06-09",
+    endsOn: "2026-06-13",
+    note: "Road trip plans fell through, cancelling.",
+    status: "cancelled",
+    createdAt: new Date("2026-05-20T12:00:00Z"),
+  },
+];
+
+const DEFAULT_BALANCES: Record<string, number> = {
+  vacation: 15,
+  sick: 10,
+  personal: 3,
+  other: 5,
+};
+
+async function seedTimeOffBalancesIfEmpty() {
+  const existing = await db
+    .select({ id: timeOffBalances.id })
+    .from(timeOffBalances)
+    .limit(1);
+  if (existing.length > 0) {
+    console.log("Skipping time-off balances — already seeded.");
+    return;
+  }
+
+  const allEmps = await db
+    .select({ id: employees.id })
+    .from(employees)
+    .where(eq(employees.isActive, true));
+
+  const year = 2026;
+  const rows: Array<{
+    employeeId: string;
+    kind: string;
+    totalDays: number;
+    usedDays: number;
+    year: number;
+  }> = [];
+  for (const emp of allEmps) {
+    for (const [kind, totalDays] of Object.entries(DEFAULT_BALANCES)) {
+      rows.push({ employeeId: emp.id, kind, totalDays, usedDays: 0, year });
+    }
+  }
+
+  console.log(`Seeding ${rows.length} time-off balance rows (${allEmps.length} employees × ${Object.keys(DEFAULT_BALANCES).length} types)…`);
+  for (let i = 0; i < rows.length; i += 100) {
+    await db.insert(timeOffBalances).values(rows.slice(i, i + 100));
+  }
+
+  // Update used_days for approved requests
+  const approvedRequests = await db
+    .select({
+      employeeId: timeOffRequests.employeeId,
+      kind: timeOffRequests.kind,
+      startsOn: timeOffRequests.startsOn,
+      endsOn: timeOffRequests.endsOn,
+    })
+    .from(timeOffRequests)
+    .where(eq(timeOffRequests.status, "approved"));
+
+  for (const req of approvedRequests) {
+    const start = new Date(req.startsOn + "T00:00:00");
+    const end = new Date(req.endsOn + "T00:00:00");
+    const days = Math.max(1, Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1);
+    await db
+      .update(timeOffBalances)
+      .set({ usedDays: drizzleSql`used_days + ${days}` })
+      .where(
+        and(
+          eq(timeOffBalances.employeeId, req.employeeId),
+          eq(timeOffBalances.kind, req.kind),
+          eq(timeOffBalances.year, year),
+        ),
+      );
+  }
+  console.log(`Updated used_days for ${approvedRequests.length} approved requests.`);
+}
+
+async function seedTimeOffIfEmpty() {
+  const existing = await db
+    .select({ id: timeOffRequests.id })
+    .from(timeOffRequests)
+    .limit(1);
+  if (existing.length > 0) {
+    console.log("Skipping time-off requests — already seeded.");
+    return;
+  }
+
+  const allEmps = await db
+    .select({ id: employees.id, email: employees.email })
+    .from(employees);
+  const empIdByEmail = new Map(allEmps.map((e) => [e.email, e.id]));
+
+  const rows = seedTimeOffList
+    .map((t) => {
+      const employeeId = empIdByEmail.get(t.employeeEmail);
+      if (!employeeId) return null;
+      const decidedByEmployeeId = t.decidedByEmail
+        ? empIdByEmail.get(t.decidedByEmail) ?? null
+        : null;
+      return {
+        employeeId,
+        kind: t.kind,
+        startsOn: t.startsOn,
+        endsOn: t.endsOn,
+        note: t.note,
+        status: t.status,
+        decidedByEmployeeId,
+        decidedAt: t.decidedAt ?? null,
+        decisionNote: t.decisionNote ?? null,
+        createdAt: t.createdAt,
+      };
+    })
+    .filter(Boolean) as Array<{
+    employeeId: string;
+    kind: string;
+    startsOn: string;
+    endsOn: string;
+    note: string | null;
+    status: string;
+    decidedByEmployeeId: string | null;
+    decidedAt: Date | null;
+    decisionNote: string | null;
+    createdAt: Date;
+  }>;
+
+  console.log(`Seeding ${rows.length} time-off requests…`);
+  await db.insert(timeOffRequests).values(rows);
+}
+
 async function run() {
   console.log(`Seeding ${seedDepartments.length} departments…`);
   await db
@@ -985,9 +1389,13 @@ async function run() {
   }
 
   await seedEventsIfEmpty();
+  await seedInternalJobsIfEmpty();
+  await seedTimeOffIfEmpty();
+  await seedTimeOffBalancesIfEmpty();
   await seedSurveysIfEmpty();
   await seedDepartmentSurveys();
   await seedDepartmentResources();
+  await seedCompanyResources();
 
   console.log("Seed complete.");
   await sql.end();

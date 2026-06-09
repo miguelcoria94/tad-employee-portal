@@ -15,6 +15,11 @@ import { HelpPage } from "@/pages/help-page";
 import { NotificationsPage } from "@/pages/notifications-page";
 import { MePage } from "@/pages/me-page";
 import { TimeOffPage } from "@/pages/time-off-page";
+import { InternalJobsPage } from "@/pages/internal-jobs-page";
+import { InternalJobDetailPage } from "@/pages/internal-job-detail-page";
+import { DmsPage } from "@/pages/dms-page";
+import { ResourcesPage } from "@/pages/resources-page";
+import { ResourceDetailPage } from "@/pages/resource-detail-page";
 import { AdminLayout } from "@/pages/admin/admin-layout";
 import { AdminEmployeesPage } from "@/pages/admin/admin-employees-page";
 import { AdminDepartmentsPage } from "@/pages/admin/admin-departments-page";
@@ -24,7 +29,16 @@ import { AdminCompanyEventsPage } from "@/pages/admin/admin-company-events-page"
 import { AdminTimeOffPage } from "@/pages/admin/admin-time-off-page";
 import { AdminSurveysPage } from "@/pages/admin/admin-surveys-page";
 import { AdminSurveyEditPage } from "@/pages/admin/admin-survey-edit-page";
+import { AdminInternalJobsPage } from "@/pages/admin/admin-internal-jobs-page";
+import { AdminResourcesPage } from "@/pages/admin/admin-resources-page";
+import { AdminFeedbackPage } from "@/pages/admin/admin-feedback-page";
+import { AdminTrainingPage } from "@/pages/admin/admin-training-page";
 import { AdminOverviewPage } from "@/pages/admin/admin-overview-page";
+import { FeedbackPage } from "@/pages/feedback-page";
+import { TrainingPage } from "@/pages/training-page";
+import { TrainingCoursePage } from "@/pages/training-course-page";
+import { FeedbackGivePage } from "@/pages/feedback-give-page";
+import { FeedbackRequestPage } from "@/pages/feedback-request-page";
 import { RequireAuth } from "@/auth/require-auth";
 import { AppShell } from "@/components/shell/app-shell";
 
@@ -55,6 +69,16 @@ export function App() {
         <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/me" element={<MePage />} />
         <Route path="/time-off" element={<TimeOffPage />} />
+        <Route path="/feedback" element={<FeedbackPage />} />
+        <Route path="/feedback/request" element={<FeedbackRequestPage />} />
+        <Route path="/feedback/:id/give" element={<FeedbackGivePage />} />
+        <Route path="/internal-jobs" element={<InternalJobsPage />} />
+        <Route path="/internal-jobs/:id" element={<InternalJobDetailPage />} />
+        <Route path="/training" element={<TrainingPage />} />
+        <Route path="/training/:id" element={<TrainingCoursePage />} />
+        <Route path="/resources" element={<ResourcesPage />} />
+        <Route path="/resources/:id" element={<ResourceDetailPage />} />
+        <Route path="/dms" element={<DmsPage />} />
         <Route
           path="/admin"
           element={
@@ -73,6 +97,10 @@ export function App() {
           <Route path="company-updates" element={<AdminCompanyUpdatesPage />} />
           <Route path="company-events" element={<AdminCompanyEventsPage />} />
           <Route path="time-off" element={<AdminTimeOffPage />} />
+          <Route path="internal-jobs" element={<AdminInternalJobsPage />} />
+          <Route path="resources" element={<AdminResourcesPage />} />
+          <Route path="training" element={<AdminTrainingPage />} />
+          <Route path="feedback" element={<AdminFeedbackPage />} />
           <Route path="surveys" element={<AdminSurveysPage />} />
           <Route path="surveys/new" element={<AdminSurveyEditPage />} />
           <Route path="surveys/:id" element={<AdminSurveyEditPage />} />

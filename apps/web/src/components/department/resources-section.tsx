@@ -1,4 +1,10 @@
-import { ExternalLink, FileText, Link as LinkIcon, Wrench } from "lucide-react";
+import { Link } from "react-router-dom";
+import {
+  ExternalLink,
+  FileText,
+  Link as LinkIcon,
+  Wrench,
+} from "lucide-react";
 import type { DepartmentResourceRow } from "@tadhealth/shared";
 import { EmptyState } from "@/components/ui/empty-state";
 
@@ -120,23 +126,45 @@ export function DocumentsSection({
         />
       ) : (
         <ul className="overflow-hidden rounded-2xl border border-brand-100 bg-white shadow-soft">
-          {sorted.map((d) => (
-            <li
-              key={d.id}
-              className="flex items-center gap-3 border-b border-brand-50 px-5 py-3 last:border-b-0 hover:bg-brand-50/40"
-            >
-              <FileText className="h-4 w-4 shrink-0 text-brand-400" />
-              <span className="min-w-0 flex-1 truncate text-sm font-medium text-brand-900">
-                {d.title}
-              </span>
-              {d.documentDate && (
-                <span className="hidden text-xs text-brand-500 sm:inline">
-                  {formatDate(d.documentDate)}
-                </span>
-              )}
-              <LinkChip label={d.linkLabel} href={d.url} />
-            </li>
-          ))}
+          {sorted.map((d) => {
+            const hasContent = !!(d.content && d.content.trim());
+            return (
+              <li
+                key={d.id}
+                className="flex items-center gap-3 border-b border-brand-50 px-5 py-3 last:border-b-0 hover:bg-brand-50/40"
+              >
+                <FileText className="h-4 w-4 shrink-0 text-brand-400" />
+                {hasContent ? (
+                  <Link
+                    to={`/resources/${d.id}`}
+                    className="min-w-0 flex-1 truncate text-sm font-medium text-brand-900 hover:text-highlight-700 hover:underline"
+                  >
+                    {d.title}
+                  </Link>
+                ) : (
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-brand-900">
+                    {d.title}
+                  </span>
+                )}
+                {d.documentDate && (
+                  <span className="hidden text-xs text-brand-500 sm:inline">
+                    {formatDate(d.documentDate)}
+                  </span>
+                )}
+                {hasContent ? (
+                  <Link
+                    to={`/resources/${d.id}`}
+                    className="inline-flex items-center gap-1 rounded-md border border-brand-100 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-brand-700 transition-colors hover:border-highlight-300 hover:bg-highlight-50 hover:text-highlight-700"
+                  >
+                    <FileText className="h-3 w-3" />
+                    Read
+                  </Link>
+                ) : (
+                  <LinkChip label={d.linkLabel} href={d.url} />
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>

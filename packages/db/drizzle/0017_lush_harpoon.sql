@@ -1,0 +1,1 @@
+ALTER TABLE "job_referrals" ADD COLUMN "resume_url" text;

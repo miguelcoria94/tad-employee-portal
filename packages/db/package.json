@@ -26,6 +26,8 @@
     "push": "drizzle-kit push",
     "studio": "drizzle-kit studio",
     "seed": "tsx src/seed.ts",
+    "seed:accounts": "tsx src/seed-accounts.ts",
+    "seed:resources": "tsx src/seed-resources.ts",
     "typecheck": "tsc --noEmit",
     "prepare": "tsc || true"
   },

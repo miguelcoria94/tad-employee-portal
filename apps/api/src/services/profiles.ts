@@ -1,12 +1,21 @@
+import { extname } from "node:path";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { getDb, schema } from "@tadhealth/db";
 import type {
   UpdateMyProfileInput,
   UpdateOnboardingInput,
 } from "@tadhealth/shared";
+import { AVATARS_BUCKET, supabaseAdmin } from "../lib/supabase.js";
 import { notify } from "./notifications.js";
 
-const ADMIN_EMAILS = new Set(["ben@tadhealth.com", "claire@tadhealth.com"]);
+const AVATAR_MIME = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/gif",
+  "image/webp",
+]);
+
+const ADMIN_EMAILS = new Set(["ben@tadhealth.com", "claire@tadhealth.com", "haley@tadhealth.com"]);
 
 export async function getProfile(userId: string) {
   const db = getDb();
@@ -182,6 +191,63 @@ export async function updateMyProfile(
   });
 
   return { employee: updated ?? before, changes };
+}
+
+/**
+ * Upload a profile photo for a given employee to Supabase Storage and persist
+ * the public URL on the employee row.
+ */
+export async function uploadAvatarForEmployee(
+  employeeId: string,
+  file: { buffer: Buffer; mimetype: string; filename?: string },
+) {
+  if (!AVATAR_MIME.has(file.mimetype)) {
+    throw new Error(`Unsupported file type: ${file.mimetype}`);
+  }
+
+  const db = getDb();
+  const ext = extname(file.filename ?? "") || ".jpg";
+  const path = `${employeeId}/avatar${ext}`;
+
+  const { error: uploadErr } = await supabaseAdmin.storage
+    .from(AVATARS_BUCKET)
+    .upload(path, file.buffer, {
+      contentType: file.mimetype,
+      upsert: true,
+    });
+
+  if (uploadErr) throw uploadErr;
+
+  const { data } = supabaseAdmin.storage
+    .from(AVATARS_BUCKET)
+    .getPublicUrl(path);
+
+  const avatarUrl = `${data.publicUrl}?v=${Date.now()}`;
+
+  const [updated] = await db
+    .update(schema.employees)
+    .set({ avatarUrl, updatedAt: sql`now()` })
+    .where(eq(schema.employees.id, employeeId))
+    .returning();
+
+  return updated ?? null;
+}
+
+/**
+ * Upload a profile photo for the calling user's linked employee.
+ */
+export async function uploadMyAvatar(
+  userId: string,
+  file: { buffer: Buffer; mimetype: string; filename?: string },
+) {
+  const db = getDb();
+  const [profile] = await db
+    .select({ employeeId: schema.profiles.employeeId })
+    .from(schema.profiles)
+    .where(eq(schema.profiles.id, userId))
+    .limit(1);
+  if (!profile?.employeeId) return null;
+  return uploadAvatarForEmployee(profile.employeeId, file);
 }
 
 export async function updateOnboarding(

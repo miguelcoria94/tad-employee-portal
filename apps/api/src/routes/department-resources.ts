@@ -9,6 +9,8 @@ import {
 import {
   createDepartmentResource,
   deleteDepartmentResource,
+  getResourceById,
+  listCompanyResources,
   listResourcesForDepartment,
   updateDepartmentResource,
 } from "../services/department-resources.js";
@@ -48,6 +50,29 @@ export const departmentResourceRoutes: FastifyPluginAsync = async (app) => {
       const { department } = deptQuery.parse(req.query);
       const resources = await listResourcesForDepartment(department);
       return { resources };
+    },
+  );
+
+  // Company-wide resources (handbook/benefits) visible to every employee.
+  app.get(
+    "/company-resources",
+    { preHandler: [app.requireAuth] },
+    async () => {
+      const resources = await listCompanyResources();
+      return { resources };
+    },
+  );
+
+  // Single resource (used by the rich-document detail view; any authenticated
+  // user may read, mirroring the select-all RLS policy).
+  app.get(
+    "/resources/:id",
+    { preHandler: [app.requireAuth] },
+    async (req) => {
+      const { id } = idParam.parse(req.params);
+      const resource = await getResourceById(id);
+      if (!resource) throw app.httpErrors.notFound("Resource not found");
+      return { resource };
     },
   );
 

@@ -1,0 +1,2 @@
+ALTER TABLE "feedback_requests" ADD COLUMN "respondent_user_id" uuid NOT NULL;--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "feedback_requests_respondent_idx" ON "feedback_requests" USING btree ("respondent_user_id");

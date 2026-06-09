@@ -19,6 +19,12 @@ import { surveyRoutes } from "./routes/surveys.js";
 import { notificationRoutes } from "./routes/notifications.js";
 import { timeOffRoutes } from "./routes/time-off.js";
 import { updateCommentRoutes } from "./routes/update-comments.js";
+import { internalJobRoutes } from "./routes/internal-jobs.js";
+import { feedbackRoutes } from "./routes/feedback.js";
+import { trainingRoutes } from "./routes/training.js";
+import { emergencyContactRoutes } from "./routes/emergency-contacts.js";
+import { dmRoutes } from "./routes/dms.js";
+import { assistantRoutes } from "./routes/assistant.js";
 
 async function buildServer() {
   const app = Fastify({
@@ -74,6 +80,12 @@ async function buildServer() {
       await api.register(notificationRoutes);
       await api.register(timeOffRoutes);
       await api.register(updateCommentRoutes);
+      await api.register(internalJobRoutes);
+      await api.register(dmRoutes);
+      await api.register(emergencyContactRoutes);
+      await api.register(feedbackRoutes);
+      await api.register(trainingRoutes);
+      await api.register(assistantRoutes);
     },
     { prefix: "/api/v1" },
   );
@@ -84,7 +96,7 @@ async function buildServer() {
 const app = await buildServer();
 
 try {
-  await app.listen({ port: config.PORT, host: "0.0.0.0" });
+  await app.listen({ port: config.PORT, host: config.HOST });
 } catch (err) {
   app.log.error(err);
   process.exit(1);

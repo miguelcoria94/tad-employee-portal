@@ -1,4 +1,4 @@
-import { and, asc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, asc, eq, getTableColumns, ilike, or, sql } from "drizzle-orm";
 import { getDb, schema } from "@tadhealth/db";
 import type {
   CreateEmployeeInput,
@@ -23,20 +23,33 @@ export async function listEmployees(query: ListEmployeesQuery) {
   }
   if (query.q) {
     const like = `%${query.q}%`;
+    // Match the full name too: a query like "Nick Bingaman" must match a row
+    // whose first_name="Nick" and last_name="Bingaman", which per-column ilike
+    // alone would miss.
+    const fullName = sql`(${schema.employees.firstName} || ' ' || coalesce(${schema.employees.lastName}, ''))`;
     where.push(
       or(
         ilike(schema.employees.firstName, like),
         ilike(schema.employees.lastName, like),
+        ilike(fullName, like),
         ilike(schema.employees.email, like),
         ilike(schema.employees.title, like),
         ilike(schema.employees.department, like),
+        ilike(schema.employees.subDepartment, like),
       )!,
     );
   }
 
+  // Expose the linked auth user id (profiles.id). The employees table has no
+  // user column; the link lives on profiles.employeeId. Clients (feedback,
+  // DMs, search) need userId to address a person, so surface it here.
   return db
-    .select()
+    .select({
+      ...getTableColumns(schema.employees),
+      userId: schema.profiles.id,
+    })
     .from(schema.employees)
+    .leftJoin(schema.profiles, eq(schema.profiles.employeeId, schema.employees.id))
     .where(where.length ? and(...where) : undefined)
     .orderBy(asc(schema.employees.sortOrder), asc(schema.employees.firstName));
 }
@@ -44,8 +57,12 @@ export async function listEmployees(query: ListEmployeesQuery) {
 export async function getEmployee(id: string) {
   const db = getDb();
   const [row] = await db
-    .select()
+    .select({
+      ...getTableColumns(schema.employees),
+      userId: schema.profiles.id,
+    })
     .from(schema.employees)
+    .leftJoin(schema.profiles, eq(schema.profiles.employeeId, schema.employees.id))
     .where(eq(schema.employees.id, id))
     .limit(1);
   return row ?? null;

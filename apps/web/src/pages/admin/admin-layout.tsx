@@ -1,13 +1,17 @@
 import { NavLink, Outlet } from "react-router-dom";
 import {
+  BookOpen,
   Building2,
   Calendar,
   ClipboardList,
+  GraduationCap,
   LayoutDashboard,
+  MessageSquare,
   Newspaper,
   PalmtreeIcon as Palmtree,
   ShieldCheck,
   Users,
+  Briefcase,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -15,9 +19,13 @@ const links = [
   { to: "/admin", label: "Overview", end: true, icon: LayoutDashboard },
   { to: "/admin/employees", label: "Employees", icon: Users },
   { to: "/admin/departments", label: "Departments", icon: Building2 },
+  { to: "/admin/resources", label: "Resources", icon: BookOpen },
   { to: "/admin/company-updates", label: "Updates", icon: Newspaper },
   { to: "/admin/company-events", label: "Events", icon: Calendar },
   { to: "/admin/surveys", label: "Surveys", icon: ClipboardList },
+  { to: "/admin/internal-jobs", label: "Jobs", icon: Briefcase },
+  { to: "/admin/feedback", label: "Feedback", icon: MessageSquare },
+  { to: "/admin/training", label: "Training", icon: GraduationCap },
   { to: "/admin/time-off", label: "Time Off", icon: Palmtree },
 ];
 

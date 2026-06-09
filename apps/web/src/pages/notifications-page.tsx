@@ -4,14 +4,18 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Bell,
+  Briefcase,
   Calendar,
   CalendarClock,
   CheckCheck,
   CheckCircle,
   ClipboardList,
   FolderOpen,
+  GraduationCap,
   Megaphone,
+  MessageCircle,
   MessageSquare,
+  Trophy,
   UserCog,
 } from "lucide-react";
 import type { NotificationKind, NotificationRow } from "@tadhealth/shared";
@@ -32,6 +36,14 @@ const ICON_BY_KIND: Record<NotificationKind, typeof Bell> = {
   time_off_decision: CheckCircle,
   update_comment: MessageSquare,
   changelog: Bell,
+  new_job: Briefcase,
+  job_referral: Briefcase,
+  feedback_request: MessageSquare,
+  feedback_received: MessageSquare,
+  new_dm: MessageCircle,
+  new_training: GraduationCap,
+  training_assigned: GraduationCap,
+  training_passed: Trophy,
 };
 
 const LABEL_BY_KIND: Record<NotificationKind, string> = {
@@ -45,6 +57,14 @@ const LABEL_BY_KIND: Record<NotificationKind, string> = {
   time_off_decision: "Time-off decisions",
   update_comment: "Comments",
   changelog: "Changelog",
+  new_job: "Jobs",
+  job_referral: "Referrals",
+  feedback_request: "Feedback requests",
+  feedback_received: "Feedback received",
+  new_dm: "Messages",
+  new_training: "Training",
+  training_assigned: "Training assigned",
+  training_passed: "Training completed",
 };
 
 function timeAgo(iso: string) {

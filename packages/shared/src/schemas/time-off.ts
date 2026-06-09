@@ -55,3 +55,29 @@ export const decideTimeOffRequestSchema = z.object({
 export type DecideTimeOffRequestInput = z.infer<
   typeof decideTimeOffRequestSchema
 >;
+
+export const timeOffBalanceSchema = z.object({
+  id: z.string().uuid(),
+  employeeId: z.string().uuid(),
+  kind: timeOffKindSchema,
+  totalDays: z.number().int(),
+  usedDays: z.number().int(),
+  year: z.number().int(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type TimeOffBalance = z.infer<typeof timeOffBalanceSchema>;
+
+export const setBalancesSchema = z.object({
+  kind: timeOffKindSchema,
+  totalDays: z.number().int().min(0).max(365),
+  year: z.number().int().min(2020).max(2099),
+  employeeIds: z.array(z.string().uuid()).optional(),
+});
+export type SetBalancesInput = z.infer<typeof setBalancesSchema>;
+
+export function countDays(startsOn: string, endsOn: string): number {
+  const start = new Date(startsOn + "T00:00:00");
+  const end = new Date(endsOn + "T00:00:00");
+  return Math.max(1, Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1);
+}

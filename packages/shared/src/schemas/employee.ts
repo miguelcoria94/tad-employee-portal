@@ -35,6 +35,9 @@ export const employeeSchema = z.object({
   sortOrder: z.number().int(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  // Linked auth user id (profiles.id). Null when the employee has no account
+  // yet. Present on list/get responses; absent on create/update payloads.
+  userId: z.string().uuid().nullable().optional(),
 });
 export type Employee = z.infer<typeof employeeSchema>;
 

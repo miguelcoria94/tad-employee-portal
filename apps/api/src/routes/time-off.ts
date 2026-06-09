@@ -3,12 +3,16 @@ import { z } from "zod";
 import {
   createTimeOffRequestSchema,
   decideTimeOffRequestSchema,
+  setBalancesSchema,
   timeOffStatusSchema,
 } from "@tadhealth/shared";
 import {
+  bulkSetBalance,
   cancelOwnRequest,
   createRequest,
   decideRequest,
+  getAllBalances,
+  getMyBalances,
   listAll,
   listMine,
 } from "../services/time-off.js";
@@ -56,6 +60,15 @@ export const timeOffRoutes: FastifyPluginAsync = async (app) => {
   );
 
   app.get(
+    "/time-off/balances",
+    { preHandler: [app.requireAuth] },
+    async (req) => {
+      const balances = await getMyBalances(req.user!.sub);
+      return { balances };
+    },
+  );
+
+  app.get(
     "/admin/time-off",
     { preHandler: [app.requireAdmin] },
     async (req) => {
@@ -74,6 +87,28 @@ export const timeOffRoutes: FastifyPluginAsync = async (app) => {
       const row = await decideRequest(req.user!.sub, id, input);
       if (!row) throw app.httpErrors.notFound("Request not found");
       return { request: row };
+    },
+  );
+
+  app.get(
+    "/admin/time-off/balances",
+    { preHandler: [app.requireAdmin] },
+    async (req) => {
+      const { year } = z
+        .object({ year: z.coerce.number().int().optional() })
+        .parse(req.query);
+      const balances = await getAllBalances(year ?? new Date().getFullYear());
+      return { balances };
+    },
+  );
+
+  app.post(
+    "/admin/time-off/balances",
+    { preHandler: [app.requireAdmin] },
+    async (req) => {
+      const input = setBalancesSchema.parse(req.body);
+      const result = await bulkSetBalance(input);
+      return result;
     },
   );
 };

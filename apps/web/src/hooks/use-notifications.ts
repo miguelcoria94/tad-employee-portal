@@ -29,8 +29,11 @@ export function useNotifications() {
 
   useEffect(() => {
     if (!userId) return;
+    // Unique topic per effect run so React StrictMode's mount→unmount→mount
+    // cycle (and the async nature of removeChannel) can't hand us a channel
+    // that's already subscribed, which makes `.on(...)` throw.
     const channel = supabase
-      .channel(`notifications:${userId}`)
+      .channel(`notifications:${userId}:${crypto.randomUUID()}`)
       .on(
         "postgres_changes",
         {

@@ -1,0 +1,1 @@
+ALTER TABLE "department_resources" ADD COLUMN "content" text;

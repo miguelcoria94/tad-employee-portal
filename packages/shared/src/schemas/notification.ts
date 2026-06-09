@@ -11,6 +11,14 @@ export const NOTIFICATION_KINDS = [
   "time_off_decision",
   "update_comment",
   "changelog",
+  "new_job",
+  "job_referral",
+  "feedback_request",
+  "feedback_received",
+  "new_dm",
+  "new_training",
+  "training_assigned",
+  "training_passed",
 ] as const;
 export const notificationKindSchema = z.enum(NOTIFICATION_KINDS);
 export type NotificationKind = z.infer<typeof notificationKindSchema>;
