@@ -52,10 +52,7 @@ export async function ensureProfile(userId: string, email?: string) {
     .values({ id: userId, employeeId, isAdmin })
     .onConflictDoNothing({ target: schema.profiles.id });
 
-  // If the profile already existed but wasn't linked to an employee (e.g.
-  // because the user signed up before the directory row was added), backfill
-  // the link the next time we see them. Only touches rows where employee_id
-  // is still null so we never overwrite an intentional unlink.
+  // Backfill employeeId when the profile existed before the directory row.
   if (employeeId) {
     await db
       .update(schema.profiles)
@@ -64,6 +61,20 @@ export async function ensureProfile(userId: string, email?: string) {
         and(
           eq(schema.profiles.id, userId),
           isNull(schema.profiles.employeeId),
+        ),
+      );
+  }
+
+  // Promote to admin if the email is in the allow-list but the existing row
+  // hasn't been promoted yet (e.g. user signed in before being added to the list).
+  if (isAdmin) {
+    await db
+      .update(schema.profiles)
+      .set({ isAdmin: true, updatedAt: sql`now()` })
+      .where(
+        and(
+          eq(schema.profiles.id, userId),
+          eq(schema.profiles.isAdmin, false),
         ),
       );
   }
