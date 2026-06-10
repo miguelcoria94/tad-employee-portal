@@ -3,6 +3,7 @@ import { LoginPage } from "@/pages/login-page";
 import { ResetPasswordPage } from "@/pages/reset-password-page";
 import { HomePage } from "@/pages/home-page";
 import { DirectoryPage } from "@/pages/directory-page";
+import { EmployeeProfilePage } from "@/pages/employee-profile-page";
 import { DepartmentsPage } from "@/pages/departments-page";
 import { DepartmentDetailPage } from "@/pages/department-detail-page";
 import { DepartmentManagePage } from "@/pages/department-manage-page";
@@ -57,6 +58,7 @@ export function App() {
       >
         <Route path="/" element={<HomePage />} />
         <Route path="/directory" element={<DirectoryPage />} />
+        <Route path="/directory/:id" element={<EmployeeProfilePage />} />
         <Route path="/departments" element={<DepartmentsPage />} />
         <Route path="/departments/:slug" element={<DepartmentDetailPage />} />
         <Route path="/departments/:slug/manage" element={<DepartmentManagePage />} />
