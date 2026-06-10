@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 type Props = {
   initials: string;
   src?: string | null;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
   className?: string;
   alt?: string;
 };
@@ -12,6 +12,7 @@ const sizeClasses = {
   sm: "h-8 w-8 text-[10px]",
   md: "h-11 w-11 text-xs",
   lg: "h-14 w-14 text-sm",
+  xl: "h-20 w-20 text-xl",
 } as const;
 
 const palettes = [
@@ -44,7 +45,7 @@ export function Avatar({
         alt={alt ?? initials}
         className={cn(
           "inline-block shrink-0 rounded-full object-cover ring-1 ring-white",
-          sizeClasses[size].split(" ").filter((c) => !c.startsWith("text-")).join(" "),
+          (sizeClasses[size] ?? sizeClasses.md).split(" ").filter((c) => !c.startsWith("text-")).join(" "),
           className,
         )}
       />
